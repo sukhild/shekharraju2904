@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Expense Approval System",
+  "description": "A comprehensive expense approval application where employees can submit requests, which are then routed through a multi-level verification and approval process managed by administrators, verifiers (like CEOs/CFOs), and senior management.",
+  "requestFramePermissions": []
+}
