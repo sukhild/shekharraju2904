@@ -1,10 +1,18 @@
-
 import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import { User, Expense, Category, Role, Status } from './types';
 import { USERS, CATEGORIES, EXPENSES } from './constants';
 import * as Notifications from './notifications';
+
+const generateReferenceNumber = (): string => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `EXP-${year}${month}${day}-${randomSuffix}`;
+};
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -37,12 +45,13 @@ const App: React.FC = () => {
     localStorage.removeItem('currentUser');
   };
 
-  const handleAddExpense = (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName'>) => {
+  const handleAddExpense = (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName' | 'referenceNumber'>) => {
     if (!currentUser) return;
 
     const newExpense: Expense = {
       ...expenseData,
       id: `exp-${Date.now()}`,
+      referenceNumber: generateReferenceNumber(),
       requestorId: currentUser.id,
       requestorName: currentUser.name,
       submittedAt: new Date().toISOString(),

@@ -1,4 +1,3 @@
-
 import { User, Category, Expense, Role, Status } from './types';
 
 export const USERS: User[] = [
@@ -18,6 +17,7 @@ export const CATEGORIES: Category[] = [
 export const EXPENSES: Expense[] = [
   {
     id: 'exp-1',
+    referenceNumber: 'EXP-20240520-A4B1',
     requestorId: 'user-2',
     requestorName: 'Requestor User',
     categoryId: 'cat-1',
@@ -32,6 +32,7 @@ export const EXPENSES: Expense[] = [
   },
   {
     id: 'exp-2',
+    referenceNumber: 'EXP-20240519-C8D2',
     requestorId: 'user-2',
     requestorName: 'Requestor User',
     categoryId: 'cat-2',
@@ -48,6 +49,7 @@ export const EXPENSES: Expense[] = [
   },
   {
     id: 'exp-3',
+    referenceNumber: 'EXP-20240521-E2F3',
     requestorId: 'user-2',
     requestorName: 'Requestor User',
     categoryId: 'cat-3',
@@ -61,6 +63,7 @@ export const EXPENSES: Expense[] = [
   },
   {
     id: 'exp-4',
+    referenceNumber: 'EXP-20240522-G6H4',
     requestorId: 'user-2',
     requestorName: 'Requestor User',
     categoryId: 'cat-4',

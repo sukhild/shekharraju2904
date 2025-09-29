@@ -1,4 +1,3 @@
-
 export enum Role {
   ADMIN = 'admin',
   REQUESTOR = 'requestor',
@@ -23,7 +22,7 @@ export interface User {
 }
 
 export interface Category {
-  id: string;
+  id:string;
   name: string;
   attachmentRequired: boolean;
   autoApproveAmount: number;
@@ -45,6 +44,7 @@ export interface HistoryItem {
 
 export interface Expense {
   id: string;
+  referenceNumber: string;
   requestorId: string;
   requestorName: string;
   categoryId: string;

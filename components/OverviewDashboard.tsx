@@ -25,9 +25,10 @@ const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ expenses, categor
     const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || 'Unknown';
 
     const handleDownloadCSV = () => {
-        const header = ['ID', 'Requestor', 'Category', 'Amount', 'Description', 'Status', 'Submitted At'];
+        const header = ['ID', 'Reference', 'Requestor', 'Category', 'Amount', 'Description', 'Status', 'Submitted At'];
         const rows = expenses.map(exp => [
             exp.id,
+            exp.referenceNumber,
             exp.requestorName,
             getCategoryName(exp.categoryId),
             exp.amount,
@@ -94,10 +95,10 @@ const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ expenses, categor
                             <div className="flex items-center space-x-4">
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-gray-900 truncate">
-                                    {expense.requestorName} - <span className="font-normal">{getCategoryName(expense.categoryId)}</span>
+                                    <span className="font-mono">{expense.referenceNumber}</span> - {expense.requestorName}
                                 </p>
                                 <p className="text-sm text-gray-500 truncate">
-                                    Submitted on {new Date(expense.submittedAt).toLocaleDateString()}
+                                    {getCategoryName(expense.categoryId)} on {new Date(expense.submittedAt).toLocaleDateString()}
                                 </p>
                             </div>
                             <div>

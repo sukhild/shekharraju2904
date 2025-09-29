@@ -17,7 +17,7 @@ export const sendEmailNotification = (to: User, subject: string, body: string) =
 
 const getExpenseDetailsForEmail = (expense: Expense, categoryName: string): string => {
   return `
-    Expense ID: ${expense.id}
+    Reference: ${expense.referenceNumber}
     Amount: ₹${expense.amount.toLocaleString('en-IN')}
     Category: ${categoryName}
     Description: ${expense.description}
@@ -26,7 +26,7 @@ const getExpenseDetailsForEmail = (expense: Expense, categoryName: string): stri
 }
 
 export const notifyRequestorOnSubmission = (requestor: User, expense: Expense, categoryName: string) => {
-    const subject = `✅ Your expense request #${expense.id} has been submitted`;
+    const subject = `✅ Your expense request ${expense.referenceNumber} has been submitted`;
     const body = `
         Hi ${requestor.name},
 
@@ -42,7 +42,7 @@ export const notifyRequestorOnSubmission = (requestor: User, expense: Expense, c
 };
 
 export const notifyVerifiersOnSubmission = (verifiers: User[], expense: Expense, categoryName: string) => {
-    const subject = `Action Required: New expense request #${expense.id} from ${expense.requestorName}`;
+    const subject = `Action Required: New expense ${expense.referenceNumber} from ${expense.requestorName}`;
     const body = `
         Hello Team,
 
@@ -69,7 +69,7 @@ export const notifyOnStatusChange = (
 
     switch(expense.status) {
         case Status.PENDING_APPROVAL:
-            subject = `👍 Your expense request #${expense.id} has been verified`;
+            subject = `👍 Your expense request ${expense.referenceNumber} has been verified`;
             body = `
                 Hi ${requestor.name},
                 
@@ -79,7 +79,7 @@ export const notifyOnStatusChange = (
             `;
             break;
         case Status.APPROVED:
-            subject = `🎉 Your expense request #${expense.id} has been approved`;
+            subject = `🎉 Your expense request ${expense.referenceNumber} has been approved`;
             body = `
                 Hi ${requestor.name},
                 
@@ -89,7 +89,7 @@ export const notifyOnStatusChange = (
             `;
             break;
         case Status.REJECTED:
-            subject = `❌ Your expense request #${expense.id} has been rejected`;
+            subject = `❌ Your expense request ${expense.referenceNumber} has been rejected`;
             const reasonText = comment
                 ? `Reason for rejection:\n"${comment}"\n`
                 : 'No specific reason was provided.';
@@ -115,7 +115,7 @@ export const notifyOnStatusChange = (
 
 
 export const notifyApproversOnVerification = (approvers: User[], expense: Expense, categoryName: string) => {
-    const subject = `Action Required: Verified expense #${expense.id} needs approval`;
+    const subject = `Action Required: Verified expense ${expense.referenceNumber} needs approval`;
     const body = `
         Hello Team,
 

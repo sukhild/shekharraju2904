@@ -1,11 +1,10 @@
-
 import React, { useState, useCallback } from 'react';
 import { Category, Expense, ExpenseAttachment } from '../types';
 import { PaperClipIcon } from './Icons';
 
 interface ExpenseFormProps {
   categories: Category[];
-  onSubmit: (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName'>) => void;
+  onSubmit: (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName' | 'referenceNumber'>) => void;
   onClose: () => void;
 }
 

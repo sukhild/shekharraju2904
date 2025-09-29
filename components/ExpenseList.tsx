@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Expense, Category, Status, User } from '../types';
 import { EyeIcon } from './Icons';
@@ -41,6 +40,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, 
                 <thead>
                   <tr>
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Date</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Reference #</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Requestor</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Category</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Amount (₹)</th>
@@ -52,6 +52,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, 
                   {expenses.map((expense) => (
                     <tr key={expense.id}>
                       <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-0">{new Date(expense.submittedAt).toLocaleDateString()}</td>
+                      <td className="px-3 py-4 text-sm font-mono text-gray-500 whitespace-nowrap">{expense.referenceNumber}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.requestorName}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{getCategoryName(expense.categoryId)}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.amount.toLocaleString('en-IN')}</td>
