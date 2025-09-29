@@ -34,6 +34,26 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRo
     const canTakeAction = (userRole === Role.VERIFIER && expense.status === Status.PENDING_VERIFICATION) ||
                           (userRole === Role.APPROVER && expense.status === Status.PENDING_APPROVAL);
 
+    const shouldShowAttachment = () => {
+        if (!expense.attachment) {
+            return false;
+        }
+
+        const isPending = expense.status === Status.PENDING_VERIFICATION || expense.status === Status.PENDING_APPROVAL;
+
+        if (isPending) {
+            return true; // All roles can see it during pending stages
+        }
+        
+        // After approval/rejection, only verifiers, approvers, and admins can see it.
+        if (userRole === Role.VERIFIER || userRole === Role.APPROVER || userRole === Role.ADMIN) {
+            return true;
+        }
+
+        // Requestor cannot see it after it's processed.
+        return false;
+    };
+
     return (
         <div className="space-y-4">
             <div>
@@ -48,7 +68,7 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRo
                 <p className="mt-1 text-sm text-gray-600">{expense.description}</p>
             </div>
             
-            {expense.attachment && (
+            {shouldShowAttachment() && expense.attachment && (
                 <div className="p-3 border rounded-md">
                      <a href={`data:${expense.attachment.type};base64,${expense.attachment.data}`} download={expense.attachment.name} className="flex items-center text-sm font-medium text-primary hover:underline">
                         <PaperClipIcon className="w-4 h-4 mr-2" />
