@@ -15,13 +15,31 @@ export const sendEmailNotification = (to: User, subject: string, body: string) =
   `);
 };
 
+const formatDate = (isoString: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+};
+
+const formatDateTime = (isoString: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    return `${formatDate(isoString)} ${hours}:${minutes}:${seconds}`;
+};
+
 const getExpenseDetailsForEmail = (expense: Expense, categoryName: string): string => {
   return `
     Reference: ${expense.referenceNumber}
     Amount: ₹${expense.amount.toLocaleString('en-IN')}
     Category: ${categoryName}
     Description: ${expense.description}
-    Submitted On: ${new Date(expense.submittedAt).toLocaleString()}
+    Submitted On: ${formatDateTime(expense.submittedAt)}
   `;
 }
 
