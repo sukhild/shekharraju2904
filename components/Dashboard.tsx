@@ -6,6 +6,7 @@ import RequestorDashboard from './RequestorDashboard';
 import VerifierDashboard from './VerifierDashboard';
 import ApproverDashboard from './ApproverDashboard';
 import OverviewDashboard from './OverviewDashboard';
+import AttachmentsDashboard from './AttachmentsDashboard';
 
 interface DashboardProps {
   currentUser: User;
@@ -90,6 +91,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
     ? expenses.filter(e => e.requestorId === currentUser.id)
     : expenses;
 
+  const canSeeAttachmentsTab = [Role.ADMIN, Role.VERIFIER, Role.APPROVER].includes(currentUser.role);
+
   const TabButton = ({ tabName, label }: {tabName: string; label: string}) => (
     <button
       onClick={() => setActiveTab(tabName)}
@@ -108,6 +111,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             <nav className="flex -mb-px space-x-8" aria-label="Tabs">
               <TabButton tabName="overview" label="Overview" />
               <TabButton tabName="tasks" label={getRoleSpecificTabName()} />
+              {canSeeAttachmentsTab && <TabButton tabName="attachments" label="Attachments" />}
             </nav>
           </div>
           <div className="mt-8">
@@ -118,6 +122,12 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
               />
             )}
             {activeTab === 'tasks' && renderRoleSpecificContent()}
+            {activeTab === 'attachments' && canSeeAttachmentsTab && (
+              <AttachmentsDashboard
+                expenses={expenses}
+                categories={categories}
+              />
+            )}
           </div>
         </div>
       </main>

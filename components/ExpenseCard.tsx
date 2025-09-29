@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Expense, Status, Role } from '../types';
-import { CheckCircleIcon, XCircleIcon, PaperClipIcon, ChevronDownIcon } from './Icons';
+import { CheckCircleIcon, XCircleIcon, PaperClipIcon, ChevronDownIcon, DocumentArrowDownIcon } from './Icons';
 
 interface ExpenseCardProps {
   expense: Expense;
@@ -70,9 +70,13 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRo
             
             {shouldShowAttachment() && expense.attachment && (
                 <div className="p-3 border rounded-md">
-                     <a href={`data:${expense.attachment.type};base64,${expense.attachment.data}`} download={expense.attachment.name} className="flex items-center text-sm font-medium text-primary hover:underline">
-                        <PaperClipIcon className="w-4 h-4 mr-2" />
-                        {expense.attachment.name}
+                     <a 
+                        href={`data:${expense.attachment.type};base64,${expense.attachment.data}`} 
+                        download={expense.attachment.name} 
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-primary hover:bg-primary-hover"
+                    >
+                        <DocumentArrowDownIcon className="w-5 h-5 mr-2" />
+                        Download ({expense.attachment.name})
                     </a>
                 </div>
             )}
