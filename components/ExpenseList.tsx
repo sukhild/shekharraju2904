@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Expense, Category, Status, User } from '../types';
+import { Expense, Category, Status, User, Project, Site } from '../types';
 import { EyeIcon, StarIcon } from './Icons';
 import Modal from './Modal';
 import ExpenseCard from './ExpenseCard';
@@ -7,6 +7,8 @@ import ExpenseCard from './ExpenseCard';
 interface ExpenseListProps {
   expenses: Expense[];
   categories: Category[];
+  projects: Project[];
+  sites: Site[];
   title: string;
   emptyMessage: string;
   userRole?: User['role'];
@@ -29,7 +31,7 @@ const formatDate = (isoString: string) => {
 };
 
 const ExpenseList: React.FC<ExpenseListProps> = ({ 
-  expenses, categories, title, emptyMessage, userRole, onUpdateStatus, onToggleExpensePriority,
+  expenses, categories, projects, sites, title, emptyMessage, userRole, onUpdateStatus, onToggleExpensePriority,
   isSelectionEnabled = false, selectedExpenseIds = [], onToggleSelection, onToggleSelectAll
 }) => {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
@@ -55,6 +57,14 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
         }
     }
     return category.name;
+  };
+
+  const getProjectName = (projectId: string): string => {
+    return projects.find(p => p.id === projectId)?.name || 'Unknown Project';
+  };
+  
+  const getSiteName = (siteId: string): string => {
+    return sites.find(s => s.id === siteId)?.name || 'Unknown Site';
   };
 
   const StatusBadge = ({ status }: { status: Status }) => {
@@ -119,8 +129,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
                           {expense.referenceNumber}
                         </div>
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.projectName}</td>
-                      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.sitePlace}</td>
+                      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{getProjectName(expense.projectId)}</td>
+                      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{getSiteName(expense.siteId)}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.requestorName}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{getCategoryAndSubcategoryName(expense)}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.amount.toLocaleString('en-IN')}</td>
@@ -146,6 +156,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
             <ExpenseCard 
                 expense={selectedExpense} 
                 categories={categories}
+                projects={projects}
+                sites={sites}
                 userRole={userRole}
                 onUpdateStatus={onUpdateStatus ? (status, comment) => {
                     onUpdateStatus(selectedExpense.id, status, comment);

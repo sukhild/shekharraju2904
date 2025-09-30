@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { User, Expense, Category, Role, Status } from '../types';
+import { User, Expense, Category, Role, Status, Project, Site } from '../types';
 import ExpenseList from './ExpenseList';
 
 interface RequestorDashboardProps {
   currentUser: User;
   expenses: Expense[];
   categories: Category[];
+  projects: Project[];
+  sites: Site[];
 }
 
-const RequestorDashboard: React.FC<RequestorDashboardProps> = ({ currentUser, expenses, categories }) => {
+const RequestorDashboard: React.FC<RequestorDashboardProps> = ({ currentUser, expenses, categories, projects, sites }) => {
   const [statusFilter, setStatusFilter] = useState<Status | 'All'>('All');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
@@ -77,6 +79,8 @@ const RequestorDashboard: React.FC<RequestorDashboardProps> = ({ currentUser, ex
         <ExpenseList 
           expenses={filteredExpenses} 
           categories={categories}
+          projects={projects}
+          sites={sites}
           title="My Expense History"
           emptyMessage="No expenses match the current filters."
           userRole={Role.REQUESTOR}

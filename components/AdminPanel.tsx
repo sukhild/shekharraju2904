@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { User, Category, Role, Subcategory, AuditLogItem } from '../types';
+import { User, Category, Role, Subcategory, AuditLogItem, Project, Site } from '../types';
 import { PencilIcon, TrashIcon, PlusIcon } from './Icons';
 import Modal from './Modal';
 
 interface AdminPanelProps {
   users: User[];
   categories: Category[];
+  projects: Project[];
+  sites: Site[];
   auditLog: AuditLogItem[];
   onAddUser: (user: Omit<User, 'id'>) => void;
   onUpdateUser: (user: User) => void;
@@ -16,21 +18,33 @@ interface AdminPanelProps {
   onAddSubcategory: (categoryId: string, subcategoryData: Omit<Subcategory, 'id'>) => void;
   onUpdateSubcategory: (categoryId: string, updatedSubcategory: Subcategory) => void;
   onDeleteSubcategory: (categoryId: string, subcategoryId: string) => void;
+  onAddProject: (project: Omit<Project, 'id'>) => void;
+  onUpdateProject: (project: Project) => void;
+  onDeleteProject: (projectId: string) => void;
+  onAddSite: (site: Omit<Site, 'id'>) => void;
+  onUpdateSite: (site: Site) => void;
+  onDeleteSite: (siteId: string) => void;
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({
-  users, categories, auditLog, onAddUser, onUpdateUser, onDeleteUser,
+  users, categories, projects, sites, auditLog, onAddUser, onUpdateUser, onDeleteUser,
   onAddCategory, onUpdateCategory, onDeleteCategory,
-  onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory
+  onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory,
+  onAddProject, onUpdateProject, onDeleteProject,
+  onAddSite, onUpdateSite, onDeleteSite,
 }) => {
   const [activeTab, setActiveTab] = useState('users');
   const [isUserModalOpen, setUserModalOpen] = useState(false);
   const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
   const [isSubcategoryModalOpen, setSubcategoryModalOpen] = useState(false);
+  const [isProjectModalOpen, setProjectModalOpen] = useState(false);
+  const [isSiteModalOpen, setSiteModalOpen] = useState(false);
   
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [editingSubcategory, setEditingSubcategory] = useState<{ subcategory: Subcategory, categoryId: string } | null>(null);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editingSite, setEditingSite] = useState<Site | null>(null);
 
 
   const handleOpenUserModal = (user: User | null = null) => {
@@ -46,6 +60,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const handleOpenSubcategoryModal = (subcategory: Subcategory | null = null, categoryId: string | null = null) => {
     setEditingSubcategory(subcategory && categoryId ? { subcategory, categoryId } : null);
     setSubcategoryModalOpen(true);
+  };
+
+  const handleOpenProjectModal = (project: Project | null = null) => {
+    setEditingProject(project);
+    setProjectModalOpen(true);
+  };
+  
+  const handleOpenSiteModal = (site: Site | null = null) => {
+    setEditingSite(site);
+    setSiteModalOpen(true);
   };
   
   const handleUserFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -106,6 +130,32 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     setEditingSubcategory(null);
   }
 
+  const handleProjectFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const projectData = { name: formData.get('name') as string };
+    if (editingProject) {
+      onUpdateProject({ ...editingProject, ...projectData });
+    } else {
+      onAddProject(projectData);
+    }
+    setProjectModalOpen(false);
+    setEditingProject(null);
+  };
+
+  const handleSiteFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const siteData = { name: formData.get('name') as string };
+    if (editingSite) {
+      onUpdateSite({ ...editingSite, ...siteData });
+    } else {
+      onAddSite(siteData);
+    }
+    setSiteModalOpen(false);
+    setEditingSite(null);
+  };
+
   const formatDateTime = (isoString: string) => {
     if (!isoString) return '';
     const date = new Date(isoString);
@@ -117,36 +167,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
+  const TabButton = ({ tabId, label }: { tabId: string, label: string }) => (
+     <button
+        onClick={() => setActiveTab(tabId)}
+        className={`${activeTab === tabId ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+      >
+        {label}
+      </button>
+  );
+
 
   return (
     <div>
       <h2 className="text-2xl font-bold tracking-tight text-gray-900">Admin Panel</h2>
       <div className="mt-4 border-b border-gray-200">
         <nav className="flex -mb-px space-x-8" aria-label="Tabs">
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`${activeTab === 'users' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-          >
-            User Management
-          </button>
-          <button
-            onClick={() => setActiveTab('categories')}
-            className={`${activeTab === 'categories' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-          >
-            Category Management
-          </button>
-          <button
-            onClick={() => setActiveTab('subcategories')}
-            className={`${activeTab === 'subcategories' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-          >
-            Subcategory Management
-          </button>
-           <button
-            onClick={() => setActiveTab('audit')}
-            className={`${activeTab === 'audit' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
-          >
-            Audit Log
-          </button>
+          <TabButton tabId="users" label="User Management" />
+          <TabButton tabId="categories" label="Category Management" />
+          <TabButton tabId="subcategories" label="Subcategory Management" />
+          <TabButton tabId="projects" label="Project Management" />
+          <TabButton tabId="sites" label="Site Management" />
+          <TabButton tabId="audit" label="Audit Log" />
         </nav>
       </div>
 
@@ -297,6 +338,92 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             </div>
           </div>
         )}
+        
+        {activeTab === 'projects' && (
+          <div>
+            <div className="sm:flex sm:items-center">
+              <div className="sm:flex-auto">
+                <h3 className="text-base font-semibold leading-6 text-gray-900">Projects</h3>
+                <p className="mt-2 text-sm text-gray-700">Manage the list of available projects for expense submission.</p>
+              </div>
+              <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+                <button onClick={() => handleOpenProjectModal()} type="button" className="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-md shadow-sm bg-primary hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                    <PlusIcon className="w-5 h-5 mr-2" /> Add project
+                </button>
+              </div>
+            </div>
+            <div className="flow-root mt-8">
+                <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                            <table className="min-w-full bg-white divide-y divide-gray-300">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Project Name</th>
+                                        <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Edit</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {projects.map((project) => (
+                                        <tr key={project.id}>
+                                            <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-6">{project.name}</td>
+                                            <td className="relative py-4 pl-3 pr-4 text-sm font-medium text-right whitespace-nowrap sm:pr-6">
+                                                <button onClick={() => handleOpenProjectModal(project)} className="text-primary hover:text-primary-hover"><PencilIcon className="w-4 h-4" /></button>
+                                                <button onClick={() => onDeleteProject(project.id)} className="ml-4 text-red-600 hover:text-red-800"><TrashIcon className="w-4 h-4" /></button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'sites' && (
+          <div>
+            <div className="sm:flex sm:items-center">
+              <div className="sm:flex-auto">
+                <h3 className="text-base font-semibold leading-6 text-gray-900">Sites/Places</h3>
+                <p className="mt-2 text-sm text-gray-700">Manage the list of available sites or places for expense submission.</p>
+              </div>
+              <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+                <button onClick={() => handleOpenSiteModal()} type="button" className="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-md shadow-sm bg-primary hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                    <PlusIcon className="w-5 h-5 mr-2" /> Add Site/Place
+                </button>
+              </div>
+            </div>
+            <div className="flow-root mt-8">
+                <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                            <table className="min-w-full bg-white divide-y divide-gray-300">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Site/Place Name</th>
+                                        <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6"><span className="sr-only">Edit</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {sites.map((site) => (
+                                        <tr key={site.id}>
+                                            <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-6">{site.name}</td>
+                                            <td className="relative py-4 pl-3 pr-4 text-sm font-medium text-right whitespace-nowrap sm:pr-6">
+                                                <button onClick={() => handleOpenSiteModal(site)} className="text-primary hover:text-primary-hover"><PencilIcon className="w-4 h-4" /></button>
+                                                <button onClick={() => onDeleteSite(site.id)} className="ml-4 text-red-600 hover:text-red-800"><TrashIcon className="w-4 h-4" /></button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        )}
 
         {activeTab === 'audit' && (
           <div>
@@ -429,6 +556,32 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               </div>
               <div className="pt-4 text-right">
                   <button type="button" onClick={() => setSubcategoryModalOpen(false)} className="px-4 py-2 mr-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">Cancel</button>
+                  <button type="submit" className="px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-primary hover:bg-primary-hover">Save</button>
+              </div>
+          </form>
+      </Modal>
+
+      <Modal isOpen={isProjectModalOpen} onClose={() => setProjectModalOpen(false)} title={editingProject ? 'Edit Project' : 'Add Project'}>
+          <form onSubmit={handleProjectFormSubmit} className="space-y-4">
+              <div>
+                  <label htmlFor="project-name" className="block text-sm font-medium text-gray-700">Project Name</label>
+                  <input type="text" name="name" id="project-name" defaultValue={editingProject?.name || ''} required className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm" />
+              </div>
+              <div className="pt-4 text-right">
+                  <button type="button" onClick={() => setProjectModalOpen(false)} className="px-4 py-2 mr-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">Cancel</button>
+                  <button type="submit" className="px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-primary hover:bg-primary-hover">Save</button>
+              </div>
+          </form>
+      </Modal>
+
+      <Modal isOpen={isSiteModalOpen} onClose={() => setSiteModalOpen(false)} title={editingSite ? 'Edit Site/Place' : 'Add Site/Place'}>
+          <form onSubmit={handleSiteFormSubmit} className="space-y-4">
+              <div>
+                  <label htmlFor="site-name" className="block text-sm font-medium text-gray-700">Site/Place Name</label>
+                  <input type="text" name="name" id="site-name" defaultValue={editingSite?.name || ''} required className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm" />
+              </div>
+              <div className="pt-4 text-right">
+                  <button type="button" onClick={() => setSiteModalOpen(false)} className="px-4 py-2 mr-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">Cancel</button>
                   <button type="submit" className="px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-primary hover:bg-primary-hover">Save</button>
               </div>
           </form>

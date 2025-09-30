@@ -34,11 +34,11 @@ const formatDateTime = (isoString: string) => {
     return `${formatDate(isoString)} ${hours}:${minutes}:${seconds}`;
 };
 
-const getExpenseDetailsForEmail = (expense: Expense, categoryName: string, subcategoryName?: string): string => {
+const getExpenseDetailsForEmail = (expense: Expense, categoryName: string, subcategoryName: string | undefined, projectName: string, siteName: string): string => {
   return `
     Reference: ${expense.referenceNumber}
-    Project: ${expense.projectName}
-    Site/Place: ${expense.sitePlace}
+    Project: ${projectName}
+    Site/Place: ${siteName}
     Amount: ₹${expense.amount.toLocaleString('en-IN')}
     Category: ${categoryName}${subcategoryName ? ` / ${subcategoryName}` : ''}
     Description: ${expense.description}
@@ -46,14 +46,14 @@ const getExpenseDetailsForEmail = (expense: Expense, categoryName: string, subca
   `;
 }
 
-export const notifyRequestorOnSubmission = (requestor: User, expense: Expense, categoryName: string, subcategoryName?: string) => {
+export const notifyRequestorOnSubmission = (requestor: User, expense: Expense, categoryName: string, subcategoryName: string | undefined, projectName: string, siteName: string) => {
     const subject = `✅ Your expense request ${expense.referenceNumber} has been submitted`;
     const body = `
         Hi ${requestor.name},
 
         This is a confirmation that your expense request has been successfully submitted.
         
-        ${getExpenseDetailsForEmail(expense, categoryName, subcategoryName)}
+        ${getExpenseDetailsForEmail(expense, categoryName, subcategoryName, projectName, siteName)}
         
         Current Status: ${expense.status}
         
@@ -62,7 +62,7 @@ export const notifyRequestorOnSubmission = (requestor: User, expense: Expense, c
     sendEmailNotification(requestor, subject, body);
 };
 
-export const notifyVerifiersOnSubmission = (verifiers: User[], expense: Expense, categoryName: string, subcategoryName?: string) => {
+export const notifyVerifiersOnSubmission = (verifiers: User[], expense: Expense, categoryName: string, subcategoryName: string | undefined, projectName: string, siteName: string) => {
     const subject = `Action Required: New expense ${expense.referenceNumber} from ${expense.requestorName}`;
     const body = `
         Hello Team,
@@ -70,7 +70,7 @@ export const notifyVerifiersOnSubmission = (verifiers: User[], expense: Expense,
         A new expense request requires your verification.
         
         Requestor: ${expense.requestorName}
-        ${getExpenseDetailsForEmail(expense, categoryName, subcategoryName)}
+        ${getExpenseDetailsForEmail(expense, categoryName, subcategoryName, projectName, siteName)}
         
         Please log in to the portal to review and take action.
     `;
@@ -82,12 +82,14 @@ export const notifyOnStatusChange = (
     requestor: User,
     expense: Expense,
     categoryName: string,
-    subcategoryName?: string,
+    subcategoryName: string | undefined,
+    projectName: string,
+    siteName: string,
     comment?: string
 ) => {
     let subject = '';
     let body = '';
-    const expenseDetails = getExpenseDetailsForEmail(expense, categoryName, subcategoryName);
+    const expenseDetails = getExpenseDetailsForEmail(expense, categoryName, subcategoryName, projectName, siteName);
 
     switch(expense.status) {
         case Status.PENDING_APPROVAL:
@@ -136,7 +138,7 @@ export const notifyOnStatusChange = (
 }
 
 
-export const notifyApproversOnVerification = (approvers: User[], expense: Expense, categoryName: string, subcategoryName?: string) => {
+export const notifyApproversOnVerification = (approvers: User[], expense: Expense, categoryName: string, subcategoryName: string | undefined, projectName: string, siteName: string) => {
     const subject = `Action Required: Verified expense ${expense.referenceNumber} needs approval`;
     const body = `
         Hello Team,
@@ -144,7 +146,7 @@ export const notifyApproversOnVerification = (approvers: User[], expense: Expens
         A verified expense request requires your final approval.
         
         Requestor: ${expense.requestorName}
-        ${getExpenseDetailsForEmail(expense, categoryName, subcategoryName)}
+        ${getExpenseDetailsForEmail(expense, categoryName, subcategoryName, projectName, siteName)}
         
         Please log in to the portal to review and take action.
     `;

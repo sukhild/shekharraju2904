@@ -1,10 +1,12 @@
 import React from 'react';
-import { Expense, Category, Status } from '../types';
+import { Expense, Category, Status, Project, Site } from '../types';
 import { DocumentArrowDownIcon } from './Icons';
 
 interface OverviewDashboardProps {
   expenses: Expense[];
   categories: Category[];
+  projects: Project[];
+  sites: Site[];
 }
 
 const formatDate = (isoString: string) => {
@@ -24,7 +26,7 @@ const StatCard: React.FC<{ title: string; value: string | number; }> = ({ title,
     </div>
 );
 
-const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ expenses, categories }) => {
+const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ expenses, categories, projects, sites }) => {
     
     const totalAmount = expenses.reduce((acc, exp) => acc + exp.amount, 0);
     const pendingCount = expenses.filter(e => e.status === Status.PENDING_APPROVAL || e.status === Status.PENDING_VERIFICATION).length;
@@ -32,7 +34,7 @@ const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ expenses, categor
     const rejectedCount = expenses.filter(e => e.status === Status.REJECTED).length;
 
     const recentExpenses = [...expenses].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()).slice(0, 5);
-    const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || 'Unknown';
+    const getProjectName = (id: string) => projects.find(p => p.id === id)?.name || 'Unknown';
 
     const handleDownloadCSV = () => {
         const header = ['ID', 'Reference', 'Requestor', 'Project Name', 'Site/Place', 'Category', 'Subcategory', 'Amount', 'Description', 'Status', 'Submitted At'];
@@ -40,12 +42,14 @@ const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ expenses, categor
             const category = categories.find(c => c.id === exp.categoryId);
             const categoryName = category?.name || '';
             const subcategoryName = category?.subcategories?.find(sc => sc.id === exp.subcategoryId)?.name || '';
+            const projectName = projects.find(p => p.id === exp.projectId)?.name || '';
+            const siteName = sites.find(s => s.id === exp.siteId)?.name || '';
             return [
                 exp.id,
                 exp.referenceNumber,
                 exp.requestorName,
-                exp.projectName,
-                exp.sitePlace,
+                projectName,
+                siteName,
                 categoryName,
                 subcategoryName,
                 exp.amount,
@@ -116,7 +120,7 @@ const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ expenses, categor
                                     <span className="font-mono">{expense.referenceNumber}</span> - {expense.requestorName}
                                 </p>
                                 <p className="text-sm text-gray-500 truncate">
-                                    Project: {expense.projectName} on {formatDate(expense.submittedAt)}
+                                    Project: {getProjectName(expense.projectId)} on {formatDate(expense.submittedAt)}
                                 </p>
                             </div>
                             <div>

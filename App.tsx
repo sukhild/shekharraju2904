@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import { User, Expense, Category, Role, Status, Subcategory, AuditLogItem } from './types';
-import { USERS, CATEGORIES, EXPENSES } from './constants';
+import { User, Expense, Category, Role, Status, Subcategory, AuditLogItem, Project, Site } from './types';
+import { USERS, CATEGORIES, EXPENSES, PROJECTS, SITES } from './constants';
 import * as Notifications from './notifications';
 
 const generateReferenceNumber = (): string => {
@@ -18,6 +18,8 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>(USERS);
   const [categories, setCategories] = useState<Category[]>(CATEGORIES);
+  const [projects, setProjects] = useState<Project[]>(PROJECTS);
+  const [sites, setSites] = useState<Site[]>(SITES);
   const [expenses, setExpenses] = useState<Expense[]>(EXPENSES);
   const [auditLog, setAuditLog] = useState<AuditLogItem[]>([]);
 
@@ -98,11 +100,14 @@ const App: React.FC = () => {
     setExpenses(prev => [newExpense, ...prev]);
 
     // Notifications
+    const projectName = projects.find(p => p.id === newExpense.projectId)?.name || 'N/A';
+    const siteName = sites.find(s => s.id === newExpense.siteId)?.name || 'N/A';
+
     if (category) {
-        Notifications.notifyRequestorOnSubmission(currentUser, newExpense, category.name, subcategory?.name);
+        Notifications.notifyRequestorOnSubmission(currentUser, newExpense, category.name, subcategory?.name, projectName, siteName);
         if (newExpense.status === Status.PENDING_VERIFICATION) {
             const verifiers = users.filter(u => u.role === Role.VERIFIER);
-            Notifications.notifyVerifiersOnSubmission(verifiers, newExpense, category.name, subcategory?.name);
+            Notifications.notifyVerifiersOnSubmission(verifiers, newExpense, category.name, subcategory?.name, projectName, siteName);
         }
     }
   };
@@ -138,11 +143,14 @@ const App: React.FC = () => {
       const requestor = users.find(u => u.id === expenseToUpdate.requestorId);
       const category = categories.find(c => c.id === expenseToUpdate.categoryId);
       const subcategory = category?.subcategories?.find(sc => sc.id === expenseToUpdate.subcategoryId);
+      const projectName = projects.find(p => p.id === expenseToUpdate.projectId)?.name || 'N/A';
+      const siteName = sites.find(s => s.id === expenseToUpdate.siteId)?.name || 'N/A';
+
       if (requestor && category) {
-          Notifications.notifyOnStatusChange(requestor, expenseToUpdate, category.name, subcategory?.name, comment);
+          Notifications.notifyOnStatusChange(requestor, expenseToUpdate, category.name, subcategory?.name, projectName, siteName, comment);
           if (oldStatus === Status.PENDING_VERIFICATION && newStatus === Status.PENDING_APPROVAL) {
               const approvers = users.filter(u => u.role === Role.APPROVER);
-              Notifications.notifyApproversOnVerification(approvers, expenseToUpdate, category.name, subcategory?.name);
+              Notifications.notifyApproversOnVerification(approvers, expenseToUpdate, category.name, subcategory?.name, projectName, siteName);
           }
       }
 
@@ -176,12 +184,14 @@ const App: React.FC = () => {
                 const requestor = users.find(u => u.id === newExpense.requestorId);
                 const category = categories.find(c => c.id === newExpense.categoryId);
                 const subcategory = category?.subcategories?.find(sc => sc.id === newExpense.subcategoryId);
+                const projectName = projects.find(p => p.id === newExpense.projectId)?.name || 'N/A';
+                const siteName = sites.find(s => s.id === newExpense.siteId)?.name || 'N/A';
 
                 if (requestor && category) {
-                    Notifications.notifyOnStatusChange(requestor, newExpense, category.name, subcategory?.name, comment);
+                    Notifications.notifyOnStatusChange(requestor, newExpense, category.name, subcategory?.name, projectName, siteName, comment);
                     if (oldStatus === Status.PENDING_VERIFICATION && newStatus === Status.PENDING_APPROVAL) {
                         const approvers = users.filter(u => u.role === Role.APPROVER);
-                        Notifications.notifyApproversOnVerification(approvers, newExpense, category.name, subcategory?.name);
+                        Notifications.notifyApproversOnVerification(approvers, newExpense, category.name, subcategory?.name, projectName, siteName);
                     }
                 }
                 
@@ -289,6 +299,44 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAddProject = (projectData: Omit<Project, 'id'>) => {
+    const newProject: Project = { ...projectData, id: `proj-${Date.now()}` };
+    setProjects(prev => [...prev, newProject]);
+    addAuditLogEntry('Project Created', `Created project '${newProject.name}'.`);
+  };
+
+  const handleUpdateProject = (updatedProject: Project) => {
+    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+    addAuditLogEntry('Project Updated', `Updated project '${updatedProject.name}'.`);
+  };
+
+  const onDeleteProject = (projectId: string) => {
+    const projectToDelete = projects.find(p => p.id === projectId);
+    setProjects(prev => prev.filter(p => p.id !== projectId));
+    if (projectToDelete) {
+      addAuditLogEntry('Project Deleted', `Deleted project '${projectToDelete.name}'.`);
+    }
+  };
+
+  const handleAddSite = (siteData: Omit<Site, 'id'>) => {
+    const newSite: Site = { ...siteData, id: `site-${Date.now()}` };
+    setSites(prev => [...prev, newSite]);
+    addAuditLogEntry('Site/Place Created', `Created site/place '${newSite.name}'.`);
+  };
+
+  const handleUpdateSite = (updatedSite: Site) => {
+    setSites(prev => prev.map(s => s.id === updatedSite.id ? updatedSite : s));
+    addAuditLogEntry('Site/Place Updated', `Updated site/place '${updatedSite.name}'.`);
+  };
+
+  const onDeleteSite = (siteId: string) => {
+    const siteToDelete = sites.find(s => s.id === siteId);
+    setSites(prev => prev.filter(s => s.id !== siteId));
+    if (siteToDelete) {
+      addAuditLogEntry('Site/Place Deleted', `Deleted site/place '${siteToDelete.name}'.`);
+    }
+  };
+
   const handleToggleExpensePriority = (expenseId: string) => {
     const expenseToUpdate = expenses.find(e => e.id === expenseId);
     if (!expenseToUpdate || !currentUser) return;
@@ -312,6 +360,8 @@ const App: React.FC = () => {
       currentUser={currentUser}
       users={users}
       categories={categories}
+      projects={projects}
+      sites={sites}
       expenses={expenses}
       auditLog={auditLog}
       onLogout={handleLogout}
@@ -328,6 +378,12 @@ const App: React.FC = () => {
       onUpdateSubcategory={handleUpdateSubcategory}
       onDeleteSubcategory={onDeleteSubcategory}
       onToggleExpensePriority={handleToggleExpensePriority}
+      onAddProject={handleAddProject}
+      onUpdateProject={handleUpdateProject}
+      onDeleteProject={onDeleteProject}
+      onAddSite={handleAddSite}
+      onUpdateSite={handleUpdateSite}
+      onDeleteSite={onDeleteSite}
     />
   );
 };

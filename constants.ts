@@ -1,4 +1,4 @@
-import { User, Category, Expense, Role, Status } from './types';
+import { User, Category, Expense, Role, Status, Project, Site } from './types';
 
 export const USERS: User[] = [
   { id: 'user-1', username: 'admin', name: 'Admin User', email: 'admin@example.com', password: 'password', role: Role.ADMIN },
@@ -6,6 +6,21 @@ export const USERS: User[] = [
   { id: 'user-3', username: 'verifier', name: 'Verifier User', email: 'verifier@example.com', password: 'password', role: Role.VERIFIER },
   { id: 'user-4', username: 'approver', name: 'Approver User', email: 'approver@example.com', password: 'password', role: Role.APPROVER },
 ];
+
+export const PROJECTS: Project[] = [
+  { id: 'proj-1', name: 'Q2 Office Refresh' },
+  { id: 'proj-2', name: 'Project Alpha Client Visit' },
+  { id: 'proj-3', name: 'Internal Team Building' },
+  { id: 'proj-4', name: 'Design Team Budget' },
+];
+
+export const SITES: Site[] = [
+  { id: 'site-1', name: 'Head Office' },
+  { id: 'site-2', name: 'Mumbai' },
+  { id: 'site-3', name: 'Local Restaurant' },
+  { id: 'site-4', name: 'N/A' },
+];
+
 
 export const CATEGORIES: Category[] = [
   { 
@@ -43,8 +58,8 @@ export const EXPENSES: Expense[] = [
     subcategoryId: 'sub-cat-1-1',
     amount: 350,
     description: 'Purchase of new stationery for the team.',
-    projectName: 'Q2 Office Refresh',
-    sitePlace: 'Head Office',
+    projectId: 'proj-1',
+    siteId: 'site-1',
     submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     status: Status.APPROVED,
     isHighPriority: false,
@@ -62,8 +77,8 @@ export const EXPENSES: Expense[] = [
     subcategoryId: 'sub-cat-2-1',
     amount: 8500,
     description: 'Flight tickets for client meeting in Mumbai.',
-    projectName: 'Project Alpha Client Visit',
-    sitePlace: 'Mumbai',
+    projectId: 'proj-2',
+    siteId: 'site-2',
     submittedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     status: Status.REJECTED,
     isHighPriority: false,
@@ -82,8 +97,8 @@ export const EXPENSES: Expense[] = [
     categoryId: 'cat-3',
     amount: 1200,
     description: 'Team lunch.',
-    projectName: 'Internal Team Building',
-    sitePlace: 'Local Restaurant',
+    projectId: 'proj-3',
+    siteId: 'site-3',
     submittedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     status: Status.PENDING_VERIFICATION,
     isHighPriority: false,
@@ -99,8 +114,8 @@ export const EXPENSES: Expense[] = [
     categoryId: 'cat-4',
     amount: 1500,
     description: 'Annual subscription for design tool.',
-    projectName: 'Design Team Budget',
-    sitePlace: 'N/A',
+    projectId: 'proj-4',
+    siteId: 'site-4',
     submittedAt: new Date().toISOString(),
     status: Status.PENDING_APPROVAL,
     isHighPriority: true,

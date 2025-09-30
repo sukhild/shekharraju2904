@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Expense, Status, Role, Category } from '../types';
+import { Expense, Status, Role, Category, Project, Site } from '../types';
 import { CheckCircleIcon, XCircleIcon, PaperClipIcon, ChevronDownIcon, DocumentArrowDownIcon, PrinterIcon, StarIcon } from './Icons';
 
 interface ExpenseCardProps {
   expense: Expense;
   categories: Category[];
+  projects: Project[];
+  sites: Site[];
   userRole?: Role;
   onUpdateStatus?: (newStatus: Status, comment?: string) => void;
   onToggleExpensePriority?: (expenseId: string) => void;
@@ -31,7 +33,7 @@ const formatDateTime = (isoString: string) => {
 };
 
 
-const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categories, userRole, onUpdateStatus, onToggleExpensePriority, onClose }) => {
+const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categories, projects, sites, userRole, onUpdateStatus, onToggleExpensePriority, onClose }) => {
     const [rejectionComment, setRejectionComment] = useState('');
     const [showRejectionInput, setShowRejectionInput] = useState(false);
     const [showHistory, setShowHistory] = useState(true);
@@ -39,6 +41,8 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categories, userRole
     const category = categories.find(c => c.id === expense.categoryId);
     const categoryName = category?.name || 'Unknown';
     const subcategoryName = category?.subcategories?.find(sc => sc.id === expense.subcategoryId)?.name;
+    const projectName = projects.find(p => p.id === expense.projectId)?.name || 'Unknown Project';
+    const siteName = sites.find(s => s.id === expense.siteId)?.name || 'Unknown Site';
 
 
     const handleApprove = () => {
@@ -69,8 +73,8 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categories, userRole
             <div className="flex items-start justify-between">
                 <div>
                     <h4 className="font-medium text-gray-800">Requestor: <span className="font-normal text-gray-600">{expense.requestorName}</span></h4>
-                    <h4 className="font-medium text-gray-800">Project: <span className="font-normal text-gray-600">{expense.projectName}</span></h4>
-                    <h4 className="font-medium text-gray-800">Site/Place: <span className="font-normal text-gray-600">{expense.sitePlace}</span></h4>
+                    <h4 className="font-medium text-gray-800">Project: <span className="font-normal text-gray-600">{projectName}</span></h4>
+                    <h4 className="font-medium text-gray-800">Site/Place: <span className="font-normal text-gray-600">{siteName}</span></h4>
                     <h4 className="font-medium text-gray-800">Category: <span className="font-normal text-gray-600">{categoryName}</span></h4>
                     {subcategoryName && <h4 className="font-medium text-gray-800">Subcategory: <span className="font-normal text-gray-600">{subcategoryName}</span></h4>}
                     <h4 className="font-medium text-gray-800">Amount: <span className="font-normal text-gray-600">₹{expense.amount.toLocaleString('en-IN')}</span></h4>

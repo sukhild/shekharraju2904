@@ -21,6 +21,17 @@ export interface User {
   role: Role;
 }
 
+export interface Project {
+  id: string;
+  name: string;
+}
+
+export interface Site {
+  id: string;
+  name: string;
+}
+
+
 export interface Subcategory {
   id: string;
   name: string;
@@ -58,8 +69,8 @@ export interface Expense {
   subcategoryId?: string;
   amount: number;
   description: string;
-  projectName: string;
-  sitePlace: string;
+  projectId: string;
+  siteId: string;
   submittedAt: string; // ISO string
   status: Status;
   isHighPriority?: boolean;

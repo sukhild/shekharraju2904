@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Expense, Category, Status, ExpenseAttachment } from '../types';
+import { Expense, Category, Status, ExpenseAttachment, Project, Site } from '../types';
 import { DocumentArrowDownIcon } from './Icons';
 
 interface AttachmentsDashboardProps {
   expenses: Expense[];
   categories: Category[];
+  projects: Project[];
+  sites: Site[];
 }
 
 const formatDate = (isoString: string) => {
@@ -17,7 +19,7 @@ const formatDate = (isoString: string) => {
     return `${day}-${month}-${year}`;
 };
 
-const AttachmentsDashboard: React.FC<AttachmentsDashboardProps> = ({ expenses, categories }) => {
+const AttachmentsDashboard: React.FC<AttachmentsDashboardProps> = ({ expenses, categories, projects, sites }) => {
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,6 +27,7 @@ const AttachmentsDashboard: React.FC<AttachmentsDashboardProps> = ({ expenses, c
   };
   
   const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || 'Unknown';
+  const getProjectName = (id: string) => projects.find(p => p.id === id)?.name || 'Unknown';
 
   const allAttachments = expenses.reduce((acc, expense) => {
     const submittedDateStr = new Date(expense.submittedAt).toISOString().split('T')[0];
@@ -106,7 +109,7 @@ const AttachmentsDashboard: React.FC<AttachmentsDashboardProps> = ({ expenses, c
                       <tr key={`${expense.id}-${type}-${index}`}>
                         <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-0">{formatDate(expense.submittedAt)}</td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.requestorName}</td>
-                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.projectName}</td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{getProjectName(expense.projectId)}</td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{getCategoryName(expense.categoryId)}</td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap"><StatusBadge status={expense.status} /></td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{attachment.name}</td>

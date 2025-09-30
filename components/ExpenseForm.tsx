@@ -1,9 +1,11 @@
 import React, { useState, useCallback } from 'react';
-import { Category, Expense, ExpenseAttachment } from '../types';
+import { Category, Expense, ExpenseAttachment, Project, Site } from '../types';
 import { PaperClipIcon } from './Icons';
 
 interface ExpenseFormProps {
   categories: Category[];
+  projects: Project[];
+  sites: Site[];
   onSubmit: (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName' | 'referenceNumber'>) => void;
   onClose: () => void;
 }
@@ -18,13 +20,13 @@ const fileToBase64 = (file: File): Promise<string> => {
 };
 
 
-const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose }) => {
+const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, onSubmit, onClose }) => {
   const [categoryId, setCategoryId] = useState<string>(categories[0]?.id || '');
   const [subcategoryId, setSubcategoryId] = useState<string>('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [projectName, setProjectName] = useState('');
-  const [sitePlace, setSitePlace] = useState('');
+  const [projectId, setProjectId] = useState<string>(projects[0]?.id || '');
+  const [siteId, setSiteId] = useState<string>(sites[0]?.id || '');
   const [attachment, setAttachment] = useState<ExpenseAttachment | undefined>(undefined);
   const [subcategoryAttachment, setSubcategoryAttachment] = useState<ExpenseAttachment | undefined>(undefined);
   const [error, setError] = useState('');
@@ -76,7 +78,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
       return;
     }
     
-    if (!categoryId || !amount || !description || !projectName || !sitePlace) {
+    if (!categoryId || !amount || !description || !projectId || !siteId) {
         setError("All fields are required.");
         return;
     }
@@ -86,8 +88,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
       subcategoryId: subcategoryId || undefined,
       amount: parseFloat(amount),
       description,
-      projectName,
-      sitePlace,
+      projectId,
+      siteId,
       attachment,
       subcategoryAttachment,
     });
@@ -125,27 +127,29 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
       )}
 
       <div>
-        <label htmlFor="projectName" className="block text-sm font-medium text-gray-700">Project Name</label>
-        <input
-          type="text"
-          id="projectName"
-          value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
+        <label htmlFor="projectId" className="block text-sm font-medium text-gray-700">Project Name</label>
+        <select
+          id="projectId"
+          value={projectId}
+          onChange={(e) => setProjectId(e.target.value)}
           required
-          className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
-        />
+          className="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        >
+          {projects.map(proj => <option key={proj.id} value={proj.id}>{proj.name}</option>)}
+        </select>
       </div>
 
        <div>
-        <label htmlFor="sitePlace" className="block text-sm font-medium text-gray-700">Site/Place</label>
-        <input
-          type="text"
-          id="sitePlace"
-          value={sitePlace}
-          onChange={(e) => setSitePlace(e.target.value)}
+        <label htmlFor="siteId" className="block text-sm font-medium text-gray-700">Site/Place</label>
+        <select
+          id="siteId"
+          value={siteId}
+          onChange={(e) => setSiteId(e.target.value)}
           required
-          className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
-        />
+          className="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+        >
+          {sites.map(site => <option key={site.id} value={site.id}>{site.name}</option>)}
+        </select>
       </div>
 
       <div>

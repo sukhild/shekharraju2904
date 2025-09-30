@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Expense, Category, Role, Status, Subcategory, AuditLogItem } from '../types';
+import { User, Expense, Category, Role, Status, Subcategory, AuditLogItem, Project, Site } from '../types';
 import Header from './Header';
 import AdminPanel from './AdminPanel';
 import RequestorDashboard from './RequestorDashboard';
@@ -15,6 +15,8 @@ interface DashboardProps {
   currentUser: User;
   users: User[];
   categories: Category[];
+  projects: Project[];
+  sites: Site[];
   expenses: Expense[];
   auditLog: AuditLogItem[];
   onLogout: () => void;
@@ -31,10 +33,16 @@ interface DashboardProps {
   onUpdateSubcategory: (categoryId: string, updatedSubcategory: Subcategory) => void;
   onDeleteSubcategory: (categoryId: string, subcategoryId: string) => void;
   onToggleExpensePriority: (expenseId: string) => void;
+  onAddProject: (project: Omit<Project, 'id'>) => void;
+  onUpdateProject: (project: Project) => void;
+  onDeleteProject: (projectId: string) => void;
+  onAddSite: (site: Omit<Site, 'id'>) => void;
+  onUpdateSite: (site: Site) => void;
+  onDeleteSite: (siteId: string) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = (props) => {
-  const { currentUser, users, categories, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog, onToggleExpensePriority, onBulkUpdateExpenseStatus } = props;
+  const { currentUser, users, categories, projects, sites, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog, onToggleExpensePriority, onBulkUpdateExpenseStatus, onAddProject, onUpdateProject, onDeleteProject, onAddSite, onUpdateSite, onDeleteSite } = props;
   const [activeTab, setActiveTab] = useState('overview');
   const [isNewExpenseModalOpen, setNewExpenseModalOpen] = useState(false);
 
@@ -55,6 +63,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
           <AdminPanel 
             users={users}
             categories={categories}
+            projects={projects}
+            sites={sites}
             auditLog={auditLog}
             onAddUser={onAddUser}
             onUpdateUser={onUpdateUser}
@@ -65,6 +75,12 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             onAddSubcategory={onAddSubcategory}
             onUpdateSubcategory={onUpdateSubcategory}
             onDeleteSubcategory={onDeleteSubcategory}
+            onAddProject={onAddProject}
+            onUpdateProject={onUpdateProject}
+            onDeleteProject={onDeleteProject}
+            onAddSite={onAddSite}
+            onUpdateSite={onUpdateSite}
+            onDeleteSite={onDeleteSite}
           />
         );
       case Role.REQUESTOR:
@@ -74,6 +90,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             currentUser={currentUser}
             expenses={myExpenses}
             categories={categories}
+            projects={projects}
+            sites={sites}
           />
         );
       case Role.VERIFIER:
@@ -82,6 +100,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
           <VerifierDashboard
             expenses={toVerify}
             categories={categories}
+            projects={projects}
+            sites={sites}
             onUpdateExpenseStatus={onUpdateExpenseStatus}
             onBulkUpdateExpenseStatus={onBulkUpdateExpenseStatus}
             onToggleExpensePriority={onToggleExpensePriority}
@@ -93,6 +113,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
           <ApproverDashboard
             expenses={toApprove}
             categories={categories}
+            projects={projects}
+            sites={sites}
             onUpdateExpenseStatus={onUpdateExpenseStatus}
             onBulkUpdateExpenseStatus={onBulkUpdateExpenseStatus}
             onToggleExpensePriority={onToggleExpensePriority}
@@ -148,6 +170,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
               <OverviewDashboard 
                 expenses={overviewExpenses}
                 categories={categories}
+                projects={projects}
+                sites={sites}
               />
             )}
             {activeTab === 'tasks' && renderRoleSpecificContent()}
@@ -155,6 +179,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
               <AttachmentsDashboard
                 expenses={expenses}
                 categories={categories}
+                projects={projects}
+                sites={sites}
               />
             )}
           </div>
@@ -164,6 +190,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
       <Modal isOpen={isNewExpenseModalOpen} onClose={() => setNewExpenseModalOpen(false)} title="New Expense Request">
         <ExpenseForm 
             categories={categories}
+            projects={projects}
+            sites={sites}
             onSubmit={onAddExpense}
             onClose={() => setNewExpenseModalOpen(false)}
         />
