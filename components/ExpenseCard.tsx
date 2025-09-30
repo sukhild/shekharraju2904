@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Expense, Status, Role, Category } from '../types';
-import { CheckCircleIcon, XCircleIcon, PaperClipIcon, ChevronDownIcon, DocumentArrowDownIcon, PrinterIcon } from './Icons';
+import { CheckCircleIcon, XCircleIcon, PaperClipIcon, ChevronDownIcon, DocumentArrowDownIcon, PrinterIcon, StarIcon } from './Icons';
 
 interface ExpenseCardProps {
   expense: Expense;
   categories: Category[];
   userRole?: Role;
   onUpdateStatus?: (newStatus: Status, comment?: string) => void;
+  onToggleExpensePriority?: (expenseId: string) => void;
   onClose?: () => void;
 }
 
@@ -30,7 +31,7 @@ const formatDateTime = (isoString: string) => {
 };
 
 
-const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categories, userRole, onUpdateStatus, onClose }) => {
+const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categories, userRole, onUpdateStatus, onToggleExpensePriority, onClose }) => {
     const [rejectionComment, setRejectionComment] = useState('');
     const [showRejectionInput, setShowRejectionInput] = useState(false);
     const [showHistory, setShowHistory] = useState(true);
@@ -78,6 +79,7 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categories, userRole
                 <div className="pl-4 text-right">
                     <p className="text-sm font-semibold text-gray-500">Reference #</p>
                     <p className="font-mono text-gray-800">{expense.referenceNumber}</p>
+                    {expense.isHighPriority && <span className="inline-flex items-center px-2 py-0.5 mt-1 text-xs font-medium text-amber-800 bg-amber-100 rounded-full">High Priority</span>}
                 </div>
             </div>
 
@@ -132,17 +134,30 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categories, userRole
 
             {/* Action buttons footer */}
             <div className="pt-4 mt-4 border-t no-print">
-                 <div className="flex items-center">
-                    <button
-                        type="button"
-                        onClick={handlePrint}
-                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
-                    >
-                        <PrinterIcon className="w-5 h-5 mr-2" />
-                        Print
-                    </button>
+                 <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                        <button
+                            type="button"
+                            onClick={handlePrint}
+                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+                        >
+                            <PrinterIcon className="w-5 h-5 mr-2" />
+                            Print
+                        </button>
 
-                    <div className="ml-auto">
+                         {canTakeAction && onToggleExpensePriority && (
+                            <button
+                            type="button"
+                            onClick={() => onToggleExpensePriority(expense.id)}
+                            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+                            >
+                            <StarIcon filled={expense.isHighPriority} className={`w-5 h-5 mr-2 ${expense.isHighPriority ? 'text-amber-500' : 'text-gray-400'}`} />
+                            {expense.isHighPriority ? 'Prioritized' : 'Prioritize'}
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="flex items-center">
                         {canTakeAction ? (
                             <div>
                                 {showRejectionInput ? (

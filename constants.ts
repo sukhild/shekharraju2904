@@ -47,6 +47,7 @@ export const EXPENSES: Expense[] = [
     sitePlace: 'Head Office',
     submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     status: Status.APPROVED,
+    isHighPriority: false,
     history: [
       { actorId: 'user-2', actorName: 'Requestor User', action: 'Submitted', timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
       { actorId: 'system', actorName: 'System', action: 'Auto-Approved', timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), comment: 'Amount is within auto-approval limit of ₹500.' },
@@ -65,6 +66,7 @@ export const EXPENSES: Expense[] = [
     sitePlace: 'Mumbai',
     submittedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     status: Status.REJECTED,
+    isHighPriority: false,
     attachment: { name: 'flight-ticket.pdf', type: 'application/pdf', data: '' },
     history: [
       { actorId: 'user-2', actorName: 'Requestor User', action: 'Submitted', timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() },
@@ -84,6 +86,7 @@ export const EXPENSES: Expense[] = [
     sitePlace: 'Local Restaurant',
     submittedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     status: Status.PENDING_VERIFICATION,
+    isHighPriority: false,
     history: [
       { actorId: 'user-2', actorName: 'Requestor User', action: 'Submitted', timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString() },
     ],
@@ -100,6 +103,7 @@ export const EXPENSES: Expense[] = [
     sitePlace: 'N/A',
     submittedAt: new Date().toISOString(),
     status: Status.PENDING_APPROVAL,
+    isHighPriority: true,
     history: [
       { actorId: 'user-2', actorName: 'Requestor User', action: 'Submitted', timestamp: new Date().toISOString() },
       { actorId: 'user-3', actorName: 'Verifier User', action: 'Verified', timestamp: new Date().toISOString() },

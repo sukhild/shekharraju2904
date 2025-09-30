@@ -62,6 +62,7 @@ export interface Expense {
   sitePlace: string;
   submittedAt: string; // ISO string
   status: Status;
+  isHighPriority?: boolean;
   attachment?: ExpenseAttachment;
   subcategoryAttachment?: ExpenseAttachment;
   history: HistoryItem[];

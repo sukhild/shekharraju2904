@@ -6,10 +6,12 @@ interface VerifierDashboardProps {
   expenses: Expense[];
   categories: Category[];
   onUpdateExpenseStatus: (expenseId: string, newStatus: Status, comment?: string) => void;
+  onToggleExpensePriority: (expenseId: string) => void;
 }
 
-const VerifierDashboard: React.FC<VerifierDashboardProps> = ({ expenses, categories, onUpdateExpenseStatus }) => {
+const VerifierDashboard: React.FC<VerifierDashboardProps> = ({ expenses, categories, onUpdateExpenseStatus, onToggleExpensePriority }) => {
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const [sortBy, setSortBy] = useState<'priority' | 'date'>('priority');
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDateRange(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -26,13 +28,21 @@ const VerifierDashboard: React.FC<VerifierDashboardProps> = ({ expenses, categor
     return true;
   });
 
+  const sortedExpenses = [...filteredExpenses].sort((a, b) => {
+    if (sortBy === 'priority') {
+      if (a.isHighPriority && !b.isHighPriority) return -1;
+      if (!a.isHighPriority && b.isHighPriority) return 1;
+    }
+    return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+  });
+
   return (
     <div>
       <h2 className="text-2xl font-bold tracking-tight text-gray-900">Verification Queue</h2>
       <p className="mt-1 text-sm text-gray-600">Review and verify the following expense requests.</p>
       
       <div className="p-4 my-6 bg-white rounded-lg shadow">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
            <div>
             <label htmlFor="from-date" className="block text-sm font-medium text-gray-700">From Date</label>
             <input 
@@ -53,17 +63,31 @@ const VerifierDashboard: React.FC<VerifierDashboardProps> = ({ expenses, categor
               onChange={handleDateChange} 
               className="block w-full py-2 pl-3 pr-2 mt-1 text-base border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" />
           </div>
+          <div>
+            <label htmlFor="sort-by-verifier" className="block text-sm font-medium text-gray-700">Sort By</label>
+            <select 
+              id="sort-by-verifier" 
+              name="sort"
+              value={sortBy} 
+              onChange={e => setSortBy(e.target.value as 'date' | 'priority')} 
+              className="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+            >
+              <option value="priority">Priority</option>
+              <option value="date">Submission Date</option>
+            </select>
+          </div>
         </div>
       </div>
 
       <div className="mt-8">
         <ExpenseList
-          expenses={filteredExpenses}
+          expenses={sortedExpenses}
           categories={categories}
           title="Pending Verification"
           emptyMessage="There are no expenses waiting for verification in the selected date range."
           userRole={Role.VERIFIER}
           onUpdateStatus={onUpdateExpenseStatus}
+          onToggleExpensePriority={onToggleExpensePriority}
         />
       </div>
     </div>

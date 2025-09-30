@@ -26,10 +26,11 @@ interface DashboardProps {
   onAddSubcategory: (categoryId: string, subcategoryData: Omit<Subcategory, 'id'>) => void;
   onUpdateSubcategory: (categoryId: string, updatedSubcategory: Subcategory) => void;
   onDeleteSubcategory: (categoryId: string, subcategoryId: string) => void;
+  onToggleExpensePriority: (expenseId: string) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = (props) => {
-  const { currentUser, users, categories, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog } = props;
+  const { currentUser, users, categories, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog, onToggleExpensePriority } = props;
   const [activeTab, setActiveTab] = useState('overview');
 
   const getRoleSpecificTabName = () => {
@@ -78,6 +79,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             expenses={toVerify}
             categories={categories}
             onUpdateExpenseStatus={onUpdateExpenseStatus}
+            onToggleExpensePriority={onToggleExpensePriority}
           />
         );
       case Role.APPROVER:
@@ -87,6 +89,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             expenses={toApprove}
             categories={categories}
             onUpdateExpenseStatus={onUpdateExpenseStatus}
+            onToggleExpensePriority={onToggleExpensePriority}
           />
         );
       default:

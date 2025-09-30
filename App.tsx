@@ -71,6 +71,7 @@ const App: React.FC = () => {
       requestorName: currentUser.name,
       submittedAt: new Date().toISOString(),
       status: Status.PENDING_VERIFICATION,
+      isHighPriority: false,
       history: [{
         actorId: currentUser.id,
         actorName: currentUser.name,
@@ -238,6 +239,20 @@ const App: React.FC = () => {
     }
   };
 
+  const handleToggleExpensePriority = (expenseId: string) => {
+    const expenseToUpdate = expenses.find(e => e.id === expenseId);
+    if (!expenseToUpdate || !currentUser) return;
+    
+    setExpenses(prev => prev.map(exp => 
+      exp.id === expenseId 
+        ? { ...exp, isHighPriority: !exp.isHighPriority } 
+        : exp
+    ));
+
+    const action = !expenseToUpdate.isHighPriority ? 'Marked as High Priority' : 'Removed High Priority';
+    addAuditLogEntry('Expense Priority Changed', `${action} for expense '${expenseToUpdate.referenceNumber}'.`);
+  };
+
   if (!currentUser) {
     return <Login onLogin={handleLogin} />;
   }
@@ -261,6 +276,7 @@ const App: React.FC = () => {
       onAddSubcategory={handleAddSubcategory}
       onUpdateSubcategory={handleUpdateSubcategory}
       onDeleteSubcategory={onDeleteSubcategory}
+      onToggleExpensePriority={handleToggleExpensePriority}
     />
   );
 };

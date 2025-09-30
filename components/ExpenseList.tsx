@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Expense, Category, Status, User } from '../types';
-import { EyeIcon } from './Icons';
+import { EyeIcon, StarIcon } from './Icons';
 import Modal from './Modal';
 import ExpenseCard from './ExpenseCard';
 
@@ -11,6 +11,7 @@ interface ExpenseListProps {
   emptyMessage: string;
   userRole?: User['role'];
   onUpdateStatus?: (expenseId: string, newStatus: Status, comment?: string) => void;
+  onToggleExpensePriority?: (expenseId: string) => void;
 }
 
 const formatDate = (isoString: string) => {
@@ -23,7 +24,7 @@ const formatDate = (isoString: string) => {
     return `${day}-${month}-${year}`;
 };
 
-const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, emptyMessage, userRole, onUpdateStatus }) => {
+const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, emptyMessage, userRole, onUpdateStatus, onToggleExpensePriority }) => {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   
   const getCategoryAndSubcategoryName = (expense: Expense): string => {
@@ -75,7 +76,12 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, 
                   {expenses.map((expense) => (
                     <tr key={expense.id}>
                       <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-0">{formatDate(expense.submittedAt)}</td>
-                      <td className="px-3 py-4 text-sm font-mono text-gray-500 whitespace-nowrap">{expense.referenceNumber}</td>
+                      <td className="px-3 py-4 text-sm font-mono text-gray-500 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {expense.isHighPriority && <StarIcon filled className="w-4 h-4 mr-1 text-amber-500" aria-label="High Priority" />}
+                          {expense.referenceNumber}
+                        </div>
+                      </td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.projectName}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.sitePlace}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.requestorName}</td>
@@ -108,6 +114,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, 
                     onUpdateStatus(selectedExpense.id, status, comment);
                     setSelectedExpense(null);
                 } : undefined}
+                onToggleExpensePriority={onToggleExpensePriority}
                 onClose={() => setSelectedExpense(null)}
             />
         </Modal>
