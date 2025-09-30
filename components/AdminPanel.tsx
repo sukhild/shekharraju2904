@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { User, Category, Role, Subcategory, AuditLogItem, Project, Site, Expense } from '../types';
-import { PencilIcon, TrashIcon, PlusIcon, DocumentArrowDownIcon } from './Icons';
+import React, { useState, useRef } from 'react';
+import { User, Category, Role, Subcategory, AuditLogItem, Project, Site, Expense, AvailableBackups } from '../types';
+import { PencilIcon, TrashIcon, PlusIcon, DocumentArrowDownIcon, UploadIcon } from './Icons';
 import Modal from './Modal';
 
 interface AdminPanelProps {
@@ -11,6 +11,7 @@ interface AdminPanelProps {
   expenses: Expense[];
   auditLog: AuditLogItem[];
   isDailyBackupEnabled: boolean;
+  availableBackups: AvailableBackups;
   onAddUser: (user: Omit<User, 'id'>) => void;
   onUpdateUser: (user: User) => void;
   onDeleteUser: (userId: string) => void;
@@ -28,16 +29,19 @@ interface AdminPanelProps {
   onDeleteSite: (siteId: string) => void;
   onToggleDailyBackup: () => void;
   onManualBackup: () => void;
+  onImportBackup: (file: File) => void;
+  onCreateMirrorBackup: () => void;
+  onDownloadSpecificBackup: (key: string) => void;
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({
-  users, categories, projects, sites, auditLog, expenses, isDailyBackupEnabled,
+  users, categories, projects, sites, auditLog, isDailyBackupEnabled, availableBackups,
   onAddUser, onUpdateUser, onDeleteUser,
   onAddCategory, onUpdateCategory, onDeleteCategory,
   onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory,
   onAddProject, onUpdateProject, onDeleteProject,
   onAddSite, onUpdateSite, onDeleteSite,
-  onToggleDailyBackup, onManualBackup
+  onToggleDailyBackup, onManualBackup, onImportBackup, onCreateMirrorBackup, onDownloadSpecificBackup
 }) => {
   const [activeTab, setActiveTab] = useState('users');
   const [isUserModalOpen, setUserModalOpen] = useState(false);
@@ -52,6 +56,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [editingSite, setEditingSite] = useState<Site | null>(null);
 
+  const importBackupInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenUserModal = (user: User | null = null) => {
     setEditingUser(user);
@@ -172,6 +177,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const minutes = date.getMinutes().toString().padStart(2, '0');
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
+
+  const handleImportClick = () => {
+    importBackupInputRef.current?.click();
+  };
+
+  const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        onImportBackup(file);
+    }
+    // Reset file input to allow selecting the same file again
+    event.target.value = '';
+  };
+
 
   const TabButton = ({ tabId, label }: { tabId: string, label: string }) => (
      <button
@@ -478,49 +497,89 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 
         {activeTab === 'backup' && (
           <div>
-            <div className="sm:flex sm:items-center">
-              <div className="sm:flex-auto">
+            <div className="sm:flex-auto">
                 <h3 className="text-base font-semibold leading-6 text-gray-900">Backup & Export</h3>
-                <p className="mt-2 text-sm text-gray-700">Manage automatic backups and perform manual data exports.</p>
-              </div>
+                <p className="mt-2 text-sm text-gray-700">Manage data import, export, and retention policies.</p>
             </div>
-            <div className="mt-8 space-y-6">
-              {/* Automatic Backup Section */}
-              <div className="p-6 bg-white rounded-lg shadow">
-                <h4 className="font-semibold text-gray-800">Automatic Daily Backups</h4>
-                <p className="mt-1 text-sm text-gray-600">When enabled, a full JSON backup of the system data will be emailed to all administrators every day at 12:05 AM.</p>
-                <div className="flex items-center mt-4">
-                  <button
-                    type="button"
-                    className={`${isDailyBackupEnabled ? 'bg-primary' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
-                    role="switch"
-                    aria-checked={isDailyBackupEnabled}
-                    onClick={onToggleDailyBackup}
-                  >
-                    <span className="sr-only">Use setting</span>
-                    <span
-                      aria-hidden="true"
-                      className={`${isDailyBackupEnabled ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
-                    />
-                  </button>
-                  <span className="ml-3 text-sm font-medium text-gray-900">{isDailyBackupEnabled ? 'Enabled' : 'Disabled'}</span>
+            <div className="grid grid-cols-1 gap-8 mt-8 lg:grid-cols-2">
+                
+                {/* Left Column */}
+                <div className="space-y-6">
+                    {/* Import Section */}
+                    <div className="p-6 bg-white rounded-lg shadow">
+                        <h4 className="font-semibold text-gray-800">Import & Restore</h4>
+                        <p className="mt-1 text-sm text-gray-600">Restore the application state from a JSON backup file. <span className="font-bold text-red-600">Warning: This will overwrite all current data.</span></p>
+                        <input type="file" ref={importBackupInputRef} className="hidden" accept="application/json" onChange={handleFileSelected} />
+                        <div className="mt-4">
+                            <button type="button" onClick={handleImportClick} className="inline-flex items-center px-3 py-2 text-sm font-semibold text-white bg-yellow-600 rounded-md shadow-sm hover:bg-yellow-700">
+                                <UploadIcon className="w-5 h-5 mr-2" />
+                                Import from Backup
+                            </button>
+                        </div>
+                    </div>
+
+                     {/* Ad-hoc Backup Section */}
+                    <div className="p-6 bg-white rounded-lg shadow">
+                        <h4 className="font-semibold text-gray-800">Ad-Hoc Manual Backup</h4>
+                        <p className="mt-1 text-sm text-gray-600">Generate and download a full JSON backup of all system data immediately. This backup is not stored automatically.</p>
+                        <div className="mt-4">
+                            <button type="button" onClick={onManualBackup} className="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-md shadow-sm bg-primary hover:bg-primary-hover">
+                                <DocumentArrowDownIcon className="w-5 h-5 mr-2" />
+                                Download Backup Now
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Mirror Backup Section */}
+                    <div className="p-6 bg-white rounded-lg shadow">
+                        <h4 className="font-semibold text-gray-800">Mirror Backup (6-Month Retention)</h4>
+                        <p className="mt-1 text-sm text-gray-600">Create a long-term mirror backup. Backups older than 6 months will be automatically deleted.</p>
+                         <div className="mt-4">
+                            <button type="button" onClick={onCreateMirrorBackup} className="inline-flex items-center px-3 py-2 text-sm font-semibold text-white bg-green-600 rounded-md shadow-sm hover:bg-green-700">
+                                Create 6-Month Mirror Backup
+                            </button>
+                        </div>
+                        <div className="mt-4">
+                            <h5 className="text-sm font-medium text-gray-700">Available Mirror Backups:</h5>
+                            <ul className="mt-2 space-y-2 text-sm text-gray-600 max-h-40 overflow-y-auto">
+                                {availableBackups.mirror.length > 0 ? availableBackups.mirror.map(key => (
+                                    <li key={key} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                                        <span className="font-mono">{key.replace('mirror_backup_', '')}</span>
+                                        <button onClick={() => onDownloadSpecificBackup(key)} className="text-primary hover:text-primary-hover"><DocumentArrowDownIcon className="w-5 h-5" /></button>
+                                    </li>
+                                )) : <li className="text-gray-500">No mirror backups found.</li>}
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-              </div>
-              {/* Manual Backup Section */}
-              <div className="p-6 bg-white rounded-lg shadow">
-                <h4 className="font-semibold text-gray-800">Manual Backup</h4>
-                <p className="mt-1 text-sm text-gray-600">Generate and download a full JSON backup of all system data immediately.</p>
-                <div className="mt-4">
-                  <button 
-                    type="button"
-                    onClick={onManualBackup}
-                    className="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-md shadow-sm bg-primary hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                  >
-                    <DocumentArrowDownIcon className="w-5 h-5 mr-2" />
-                    Download Backup Now
-                  </button>
+
+                {/* Right Column */}
+                <div className="space-y-6">
+                    {/* Automatic Backup Section */}
+                    <div className="p-6 bg-white rounded-lg shadow">
+                        <h4 className="font-semibold text-gray-800">Automatic Daily Backups (20-Day Retention)</h4>
+                        <p className="mt-1 text-sm text-gray-600">If enabled, a backup is created daily at 12:05 AM, an email is sent to admins, and the last 20 backups are retained.</p>
+                        <div className="flex items-center mt-4">
+                            <button type="button" className={`${isDailyBackupEnabled ? 'bg-primary' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`} role="switch" aria-checked={isDailyBackupEnabled} onClick={onToggleDailyBackup}>
+                                <span className="sr-only">Toggle daily backups</span>
+                                <span aria-hidden="true" className={`${isDailyBackupEnabled ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`} />
+                            </button>
+                            <span className="ml-3 text-sm font-medium text-gray-900">{isDailyBackupEnabled ? 'Enabled' : 'Disabled'}</span>
+                        </div>
+                        <div className="mt-4">
+                            <h5 className="text-sm font-medium text-gray-700">Recent Daily Backups:</h5>
+                            <ul className="mt-2 space-y-2 text-sm text-gray-600 max-h-96 overflow-y-auto">
+                                {availableBackups.daily.length > 0 ? availableBackups.daily.map(key => (
+                                    <li key={key} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
+                                        <span className="font-mono">{key.replace('backup_', '')}</span>
+                                        <button onClick={() => onDownloadSpecificBackup(key)} className="text-primary hover:text-primary-hover"><DocumentArrowDownIcon className="w-5 h-5" /></button>
+                                    </li>
+                                )) : <li className="text-gray-500">No recent daily backups found.</li>}
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-              </div>
+
             </div>
           </div>
         )}

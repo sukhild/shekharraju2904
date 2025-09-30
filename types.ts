@@ -87,3 +87,8 @@ export interface AuditLogItem {
   action: string;
   details: string;
 }
+
+export interface AvailableBackups {
+  daily: string[];
+  mirror: string[];
+}

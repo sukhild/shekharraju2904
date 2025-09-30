@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import { User, Expense, Category, Role, Status, Subcategory, AuditLogItem, Project, Site } from './types';
+import { User, Expense, Category, Role, Status, Subcategory, AuditLogItem, Project, Site, AvailableBackups } from './types';
 import { USERS, CATEGORIES, EXPENSES, PROJECTS, SITES } from './constants';
 import * as Notifications from './notifications';
 
@@ -23,14 +23,52 @@ const App: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>(EXPENSES);
   const [auditLog, setAuditLog] = useState<AuditLogItem[]>([]);
   const [isDailyBackupEnabled, setDailyBackupEnabled] = useState<boolean>(false);
+  const [availableBackups, setAvailableBackups] = useState<AvailableBackups>({ daily: [], mirror: [] });
+
+  const scanAndCleanupBackups = useCallback(() => {
+    const dailyBackups: string[] = [];
+    const mirrorBackups: string[] = [];
+    const now = new Date();
+
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('backup_')) {
+            dailyBackups.push(key);
+        } else if (key?.startsWith('mirror_backup_')) {
+            const dateStr = key.replace('mirror_backup_', '');
+            const backupDate = new Date(dateStr);
+            const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
+            if (backupDate < sixMonthsAgo) {
+                localStorage.removeItem(key); // Cleanup old mirror backup
+            } else {
+                mirrorBackups.push(key);
+            }
+        }
+    }
+
+    // Sort and cleanup daily backups, keeping only the last 20
+    dailyBackups.sort().reverse();
+    if (dailyBackups.length > 20) {
+        const toDelete = dailyBackups.slice(20);
+        toDelete.forEach(key => localStorage.removeItem(key));
+        dailyBackups.splice(20);
+    }
+    
+    mirrorBackups.sort().reverse();
+
+    setAvailableBackups({ daily: dailyBackups, mirror: mirrorBackups });
+  }, []);
 
   useEffect(() => {
+    // Initial scan on mount
+    scanAndCleanupBackups();
     // Attempt to load user from local storage
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
     }
-  }, []);
+  }, [scanAndCleanupBackups]);
+
 
   // Effect for daily backup trigger simulation
   useEffect(() => {
@@ -43,32 +81,32 @@ const App: React.FC = () => {
       const hours = now.getHours();
       const minutes = now.getMinutes();
       const currentDayStr = now.toISOString().split('T')[0];
+      const backupKey = `backup_${currentDayStr}`;
 
-      // Reset the trigger flag for a new day
-      if (localStorage.getItem('lastBackupDate') !== currentDayStr) {
-        localStorage.removeItem('backupTriggeredToday');
-      }
-
-      // Check for backup time (00:05) and ensure it hasn't already been triggered today
-      if (hours === 0 && minutes === 5 && !localStorage.getItem('backupTriggeredToday')) {
-        console.log("Backup time reached (00:05). Triggering backup email...");
+      // Check for backup time (00:05) and ensure it hasn't already been created today
+      if (hours === 0 && minutes === 5 && !localStorage.getItem(backupKey)) {
+        console.log("Backup time reached (00:05). Triggering backup...");
 
         const backupData = { users, categories, projects, sites, expenses, auditLog };
         const backupJSON = JSON.stringify(backupData, null, 2);
         const admins = users.filter(u => u.role === Role.ADMIN);
 
+        // 1. Save to localStorage for retention
+        localStorage.setItem(backupKey, backupJSON);
+        console.log(`Daily backup saved to localStorage with key: ${backupKey}`);
+
+        // 2. "Email" the backup
         if (admins.length > 0) {
           Notifications.sendBackupEmail(admins, backupJSON);
         }
 
-        // Set flags to prevent re-triggering for today
-        localStorage.setItem('backupTriggeredToday', 'true');
-        localStorage.setItem('lastBackupDate', currentDayStr);
+        // 3. Rescan and apply retention policies
+        scanAndCleanupBackups();
       }
     }, 30 * 1000); // Check every 30 seconds
 
     return () => clearInterval(backupInterval);
-  }, [isDailyBackupEnabled, users, categories, projects, sites, expenses, auditLog]);
+  }, [isDailyBackupEnabled, users, categories, projects, sites, expenses, auditLog, scanAndCleanupBackups]);
 
 
   const addAuditLogEntry = (action: string, details: string) => {
@@ -407,6 +445,8 @@ const App: React.FC = () => {
     addAuditLogEntry('Expense Priority Changed', `${action} for expense '${expenseToUpdate.referenceNumber}'.`);
   };
 
+  // --- BACKUP & RESTORE FUNCTIONS ---
+
   const handleToggleDailyBackup = () => {
     const newState = !isDailyBackupEnabled;
     setDailyBackupEnabled(newState);
@@ -415,25 +455,85 @@ const App: React.FC = () => {
 
   const handleManualBackup = () => {
     if (!currentUser) return;
-
     const backupData = { users, categories, projects, sites, expenses, auditLog };
     const backupJSON = JSON.stringify(backupData, null, 2);
     const blob = new Blob([backupJSON], { type: 'application/json;charset=utf-8;' });
     const link = document.createElement('a');
-    
     const now = new Date();
     const timestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}-${now.getMinutes().toString().padStart(2, '0')}`;
-    const filename = `expenseflow-backup-${timestamp}.json`;
-
+    const filename = `expenseflow-backup-manual-${timestamp}.json`;
     link.href = URL.createObjectURL(blob);
     link.setAttribute('download', filename);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
-
     addAuditLogEntry('Data Export', 'Generated and downloaded a manual JSON backup.');
   };
+
+  const handleImportBackup = (file: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const result = event.target?.result;
+            if (typeof result !== 'string') {
+                alert("Error reading file.");
+                return;
+            }
+            const data = JSON.parse(result);
+            // Basic validation
+            if (!data.users || !data.categories || !data.projects || !data.sites || !data.expenses || !data.auditLog) {
+                throw new Error("Invalid backup file structure.");
+            }
+            if (window.confirm("Are you sure you want to restore from this backup? All current data will be overwritten.")) {
+                setUsers(data.users);
+                setCategories(data.categories);
+                setProjects(data.projects);
+                setSites(data.sites);
+                setExpenses(data.expenses);
+                setAuditLog(data.auditLog);
+                alert("Restore successful!");
+                addAuditLogEntry('Data Import', `Restored system state from backup file: ${file.name}.`);
+            }
+        } catch (e) {
+            console.error("Failed to parse backup file:", e);
+            alert("Failed to import backup. The file may be corrupt or in the wrong format.");
+        }
+    };
+    reader.readAsText(file);
+  };
+  
+  const handleCreateMirrorBackup = () => {
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    const key = `mirror_backup_${dateStr}`;
+    const backupData = { users, categories, projects, sites, expenses, auditLog };
+    const backupJSON = JSON.stringify(backupData, null, 2);
+    localStorage.setItem(key, backupJSON);
+    addAuditLogEntry('Data Export', `Created a 6-month mirror backup.`);
+    scanAndCleanupBackups();
+    alert(`Mirror backup for ${dateStr} has been created.`);
+  };
+
+  const handleDownloadSpecificBackup = (key: string) => {
+    const backupJSON = localStorage.getItem(key);
+    if (!backupJSON) {
+        alert("Could not find the selected backup data.");
+        return;
+    }
+    const blob = new Blob([backupJSON], { type: 'application/json;charset=utf-8;' });
+    const link = document.createElement('a');
+    const filename = `expenseflow-${key}.json`;
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+    addAuditLogEntry('Data Export', `Downloaded stored backup: ${key}.`);
+  };
+
 
   if (!currentUser) {
     return <Login onLogin={handleLogin} />;
@@ -449,6 +549,7 @@ const App: React.FC = () => {
       expenses={expenses}
       auditLog={auditLog}
       isDailyBackupEnabled={isDailyBackupEnabled}
+      availableBackups={availableBackups}
       onLogout={handleLogout}
       onAddExpense={handleAddExpense}
       onUpdateExpenseStatus={handleUpdateExpenseStatus}
@@ -471,6 +572,9 @@ const App: React.FC = () => {
       onDeleteSite={onDeleteSite}
       onToggleDailyBackup={handleToggleDailyBackup}
       onManualBackup={handleManualBackup}
+      onImportBackup={handleImportBackup}
+      onCreateMirrorBackup={handleCreateMirrorBackup}
+      onDownloadSpecificBackup={handleDownloadSpecificBackup}
     />
   );
 };

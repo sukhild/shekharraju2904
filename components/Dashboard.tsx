@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Expense, Category, Role, Status, Subcategory, AuditLogItem, Project, Site } from '../types';
+import { User, Expense, Category, Role, Status, Subcategory, AuditLogItem, Project, Site, AvailableBackups } from '../types';
 import Header from './Header';
 import AdminPanel from './AdminPanel';
 import RequestorDashboard from './RequestorDashboard';
@@ -21,6 +21,7 @@ interface DashboardProps {
   expenses: Expense[];
   auditLog: AuditLogItem[];
   isDailyBackupEnabled: boolean;
+  availableBackups: AvailableBackups;
   onLogout: () => void;
   onAddExpense: (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName' | 'referenceNumber'>) => void;
   onUpdateExpenseStatus: (expenseId: string, newStatus: Status, comment?: string) => void;
@@ -43,10 +44,14 @@ interface DashboardProps {
   onDeleteSite: (siteId: string) => void;
   onToggleDailyBackup: () => void;
   onManualBackup: () => void;
+  onImportBackup: (file: File) => void;
+  onCreateMirrorBackup: () => void;
+  onDownloadSpecificBackup: (key: string) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = (props) => {
-  const { currentUser, users, categories, projects, sites, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog, onToggleExpensePriority, onBulkUpdateExpenseStatus, onAddProject, onUpdateProject, onDeleteProject, onAddSite, onUpdateSite, onDeleteSite, isDailyBackupEnabled, onToggleDailyBackup, onManualBackup } = props;
+  // FIX: Removed non-existent 'setModalExpense' prop from destructuring.
+  const { currentUser, onLogout, expenses, categories, projects, sites, onAddExpense, onUpdateExpenseStatus, ...adminProps } = props;
   const [activeTab, setActiveTab] = useState('overview');
   const [isNewExpenseModalOpen, setNewExpenseModalOpen] = useState(false);
   const [modalExpense, setModalExpense] = useState<Expense | null>(null);
@@ -65,32 +70,14 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
   const renderRoleSpecificContent = () => {
     switch (currentUser.role) {
       case Role.ADMIN:
+        // FIX: Pass missing 'expenses', 'categories', 'projects', and 'sites' props to AdminPanel.
         return (
           <AdminPanel 
-            users={users}
+            {...adminProps}
+            expenses={expenses}
             categories={categories}
             projects={projects}
             sites={sites}
-            expenses={expenses}
-            auditLog={auditLog}
-            isDailyBackupEnabled={isDailyBackupEnabled}
-            onAddUser={onAddUser}
-            onUpdateUser={onUpdateUser}
-            onDeleteUser={onDeleteUser}
-            onAddCategory={onAddCategory}
-            onUpdateCategory={onUpdateCategory}
-            onDeleteCategory={onDeleteCategory}
-            onAddSubcategory={onAddSubcategory}
-            onUpdateSubcategory={onUpdateSubcategory}
-            onDeleteSubcategory={onDeleteSubcategory}
-            onAddProject={onAddProject}
-            onUpdateProject={onUpdateProject}
-            onDeleteProject={onDeleteProject}
-            onAddSite={onAddSite}
-            onUpdateSite={onUpdateSite}
-            onDeleteSite={onDeleteSite}
-            onToggleDailyBackup={onToggleDailyBackup}
-            onManualBackup={onManualBackup}
           />
         );
       case Role.REQUESTOR:
@@ -114,8 +101,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             projects={projects}
             sites={sites}
             onUpdateExpenseStatus={onUpdateExpenseStatus}
-            onBulkUpdateExpenseStatus={onBulkUpdateExpenseStatus}
-            onToggleExpensePriority={onToggleExpensePriority}
+            onBulkUpdateExpenseStatus={adminProps.onBulkUpdateExpenseStatus}
+            onToggleExpensePriority={adminProps.onToggleExpensePriority}
             onViewExpense={setModalExpense}
           />
         );
@@ -128,8 +115,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             projects={projects}
             sites={sites}
             onUpdateExpenseStatus={onUpdateExpenseStatus}
-            onBulkUpdateExpenseStatus={onBulkUpdateExpenseStatus}
-            onToggleExpensePriority={onToggleExpensePriority}
+            onBulkUpdateExpenseStatus={adminProps.onBulkUpdateExpenseStatus}
+            onToggleExpensePriority={adminProps.onToggleExpensePriority}
             onViewExpense={setModalExpense}
           />
         );
@@ -230,7 +217,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
                     onUpdateExpenseStatus(modalExpense.id, status, comment);
                     setModalExpense(null);
                 } : undefined}
-                onToggleExpensePriority={onToggleExpensePriority}
+                onToggleExpensePriority={adminProps.onToggleExpensePriority}
                 onClose={() => setModalExpense(null)}
             />
         </Modal>
