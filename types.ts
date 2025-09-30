@@ -21,11 +21,18 @@ export interface User {
   role: Role;
 }
 
+export interface Subcategory {
+  id: string;
+  name: string;
+  attachmentRequired: boolean;
+}
+
 export interface Category {
   id:string;
   name: string;
   attachmentRequired: boolean;
   autoApproveAmount: number;
+  subcategories?: Subcategory[];
 }
 
 export interface ExpenseAttachment {
@@ -48,6 +55,7 @@ export interface Expense {
   requestorId: string;
   requestorName: string;
   categoryId: string;
+  subcategoryId?: string;
   amount: number;
   description: string;
   projectName: string;
@@ -55,5 +63,6 @@ export interface Expense {
   submittedAt: string; // ISO string
   status: Status;
   attachment?: ExpenseAttachment;
+  subcategoryAttachment?: ExpenseAttachment;
   history: HistoryItem[];
 }

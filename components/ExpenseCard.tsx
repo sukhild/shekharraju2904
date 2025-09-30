@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Expense, Status, Role } from '../types';
+import { Expense, Status, Role, Category } from '../types';
 import { CheckCircleIcon, XCircleIcon, PaperClipIcon, ChevronDownIcon, DocumentArrowDownIcon, PrinterIcon } from './Icons';
 
 interface ExpenseCardProps {
   expense: Expense;
-  categoryName: string;
+  categories: Category[];
   userRole?: Role;
   onUpdateStatus?: (newStatus: Status, comment?: string) => void;
   onClose?: () => void;
@@ -30,10 +30,15 @@ const formatDateTime = (isoString: string) => {
 };
 
 
-const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRole, onUpdateStatus, onClose }) => {
+const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categories, userRole, onUpdateStatus, onClose }) => {
     const [rejectionComment, setRejectionComment] = useState('');
     const [showRejectionInput, setShowRejectionInput] = useState(false);
     const [showHistory, setShowHistory] = useState(true);
+
+    const category = categories.find(c => c.id === expense.categoryId);
+    const categoryName = category?.name || 'Unknown';
+    const subcategoryName = category?.subcategories?.find(sc => sc.id === expense.subcategoryId)?.name;
+
 
     const handleApprove = () => {
         if (!onUpdateStatus) return;
@@ -58,8 +63,6 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRo
     const canTakeAction = (userRole === Role.VERIFIER && expense.status === Status.PENDING_VERIFICATION) ||
                           (userRole === Role.APPROVER && expense.status === Status.PENDING_APPROVAL);
 
-    const showAttachment = !!expense.attachment;
-
     return (
         <div className="space-y-4">
             <div className="flex items-start justify-between">
@@ -68,6 +71,7 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRo
                     <h4 className="font-medium text-gray-800">Project: <span className="font-normal text-gray-600">{expense.projectName}</span></h4>
                     <h4 className="font-medium text-gray-800">Site/Place: <span className="font-normal text-gray-600">{expense.sitePlace}</span></h4>
                     <h4 className="font-medium text-gray-800">Category: <span className="font-normal text-gray-600">{categoryName}</span></h4>
+                    {subcategoryName && <h4 className="font-medium text-gray-800">Subcategory: <span className="font-normal text-gray-600">{subcategoryName}</span></h4>}
                     <h4 className="font-medium text-gray-800">Amount: <span className="font-normal text-gray-600">₹{expense.amount.toLocaleString('en-IN')}</span></h4>
                     <h4 className="font-medium text-gray-800">Submitted: <span className="font-normal text-gray-600">{formatDateTime(expense.submittedAt)}</span></h4>
                 </div>
@@ -82,7 +86,7 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRo
                 <p className="mt-1 text-sm text-gray-600">{expense.description}</p>
             </div>
             
-            {showAttachment && expense.attachment && (
+            {expense.attachment && (
                 <div className="p-3 border rounded-md">
                      <a 
                         href={`data:${expense.attachment.type};base64,${expense.attachment.data}`} 
@@ -90,7 +94,20 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRo
                         className="inline-flex items-center px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-primary hover:bg-primary-hover"
                     >
                         <DocumentArrowDownIcon className="w-5 h-5 mr-2" />
-                        Download ({expense.attachment.name})
+                        Download Category Attachment ({expense.attachment.name})
+                    </a>
+                </div>
+            )}
+            
+            {expense.subcategoryAttachment && (
+                <div className="p-3 border rounded-md">
+                     <a 
+                        href={`data:${expense.subcategoryAttachment.type};base64,${expense.subcategoryAttachment.data}`} 
+                        download={expense.subcategoryAttachment.name} 
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md shadow-sm bg-secondary hover:bg-green-600"
+                    >
+                        <DocumentArrowDownIcon className="w-5 h-5 mr-2" />
+                        Download Subcategory Attachment ({expense.subcategoryAttachment.name})
                     </a>
                 </div>
             )}

@@ -26,7 +26,18 @@ const formatDate = (isoString: string) => {
 const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, emptyMessage, userRole, onUpdateStatus }) => {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   
-  const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || 'Unknown';
+  const getCategoryAndSubcategoryName = (expense: Expense): string => {
+    const category = categories.find(c => c.id === expense.categoryId);
+    if (!category) return 'Unknown';
+
+    if (expense.subcategoryId) {
+        const subcategory = category.subcategories?.find(sc => sc.id === expense.subcategoryId);
+        if (subcategory) {
+            return `${category.name} / ${subcategory.name}`;
+        }
+    }
+    return category.name;
+  };
 
   const StatusBadge = ({ status }: { status: Status }) => {
     const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
@@ -68,7 +79,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, 
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.projectName}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.sitePlace}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.requestorName}</td>
-                      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{getCategoryName(expense.categoryId)}</td>
+                      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{getCategoryAndSubcategoryName(expense)}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.amount.toLocaleString('en-IN')}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap"><StatusBadge status={expense.status} /></td>
                       <td className="relative py-4 pl-3 pr-4 text-sm font-medium text-right whitespace-nowrap sm:pr-0">
@@ -91,7 +102,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, 
         <Modal isOpen={!!selectedExpense} onClose={() => setSelectedExpense(null)} title="Expense Details">
             <ExpenseCard 
                 expense={selectedExpense} 
-                categoryName={getCategoryName(selectedExpense.categoryId)}
+                categories={categories}
                 userRole={userRole}
                 onUpdateStatus={onUpdateStatus ? (status, comment) => {
                     onUpdateStatus(selectedExpense.id, status, comment);

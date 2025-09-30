@@ -8,8 +8,27 @@ export const USERS: User[] = [
 ];
 
 export const CATEGORIES: Category[] = [
-  { id: 'cat-1', name: 'Office Supplies', attachmentRequired: false, autoApproveAmount: 500 },
-  { id: 'cat-2', name: 'Travel', attachmentRequired: true, autoApproveAmount: 0 },
+  { 
+    id: 'cat-1', 
+    name: 'Office Supplies', 
+    attachmentRequired: false, 
+    autoApproveAmount: 500,
+    subcategories: [
+      { id: 'sub-cat-1-1', name: 'Stationery', attachmentRequired: false },
+      { id: 'sub-cat-1-2', name: 'Electronics', attachmentRequired: true },
+    ]
+  },
+  { 
+    id: 'cat-2', 
+    name: 'Travel', 
+    attachmentRequired: true, 
+    autoApproveAmount: 0,
+    subcategories: [
+      { id: 'sub-cat-2-1', name: 'Flights', attachmentRequired: true },
+      { id: 'sub-cat-2-2', name: 'Hotels', attachmentRequired: true },
+      { id: 'sub-cat-2-3', name: 'Local Conveyance', attachmentRequired: false },
+    ]
+  },
   { id: 'cat-3', name: 'Food & Dining', attachmentRequired: false, autoApproveAmount: 1000 },
   { id: 'cat-4', name: 'Software Subscription', attachmentRequired: false, autoApproveAmount: 2000 },
 ];
@@ -21,6 +40,7 @@ export const EXPENSES: Expense[] = [
     requestorId: 'user-2',
     requestorName: 'Requestor User',
     categoryId: 'cat-1',
+    subcategoryId: 'sub-cat-1-1',
     amount: 350,
     description: 'Purchase of new stationery for the team.',
     projectName: 'Q2 Office Refresh',
@@ -38,6 +58,7 @@ export const EXPENSES: Expense[] = [
     requestorId: 'user-2',
     requestorName: 'Requestor User',
     categoryId: 'cat-2',
+    subcategoryId: 'sub-cat-2-1',
     amount: 8500,
     description: 'Flight tickets for client meeting in Mumbai.',
     projectName: 'Project Alpha Client Visit',

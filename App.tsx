@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import { User, Expense, Category, Role, Status } from './types';
+import { User, Expense, Category, Role, Status, Subcategory } from './types';
 import { USERS, CATEGORIES, EXPENSES } from './constants';
 import * as Notifications from './notifications';
 
@@ -65,6 +65,8 @@ const App: React.FC = () => {
     };
 
     const category = categories.find(c => c.id === newExpense.categoryId);
+    const subcategory = category?.subcategories?.find(sc => sc.id === newExpense.subcategoryId);
+
     // Auto-approve logic
     if (category && newExpense.amount <= category.autoApproveAmount) {
       newExpense.status = Status.APPROVED;
@@ -81,10 +83,10 @@ const App: React.FC = () => {
 
     // Notifications
     if (category) {
-        Notifications.notifyRequestorOnSubmission(currentUser, newExpense, category.name);
+        Notifications.notifyRequestorOnSubmission(currentUser, newExpense, category.name, subcategory?.name);
         if (newExpense.status === Status.PENDING_VERIFICATION) {
             const verifiers = users.filter(u => u.role === Role.VERIFIER);
-            Notifications.notifyVerifiersOnSubmission(verifiers, newExpense, category.name);
+            Notifications.notifyVerifiersOnSubmission(verifiers, newExpense, category.name, subcategory?.name);
         }
     }
   };
@@ -119,11 +121,12 @@ const App: React.FC = () => {
       // Notifications
       const requestor = users.find(u => u.id === expenseToUpdate.requestorId);
       const category = categories.find(c => c.id === expenseToUpdate.categoryId);
+      const subcategory = category?.subcategories?.find(sc => sc.id === expenseToUpdate.subcategoryId);
       if (requestor && category) {
-          Notifications.notifyOnStatusChange(requestor, expenseToUpdate, category.name, comment);
+          Notifications.notifyOnStatusChange(requestor, expenseToUpdate, category.name, subcategory?.name, comment);
           if (oldStatus === Status.PENDING_VERIFICATION && newStatus === Status.PENDING_APPROVAL) {
               const approvers = users.filter(u => u.role === Role.APPROVER);
-              Notifications.notifyApproversOnVerification(approvers, expenseToUpdate, category.name);
+              Notifications.notifyApproversOnVerification(approvers, expenseToUpdate, category.name, subcategory?.name);
           }
       }
 
@@ -157,6 +160,43 @@ const App: React.FC = () => {
     setCategories(prev => prev.filter(c => c.id !== categoryId));
   };
 
+  const handleAddSubcategory = (categoryId: string, subcategoryData: Omit<Subcategory, 'id'>) => {
+    const newSubcategory: Subcategory = { ...subcategoryData, id: `sub-cat-${Date.now()}` };
+    setCategories(prev => prev.map(c => {
+      if (c.id === categoryId) {
+        return {
+          ...c,
+          subcategories: [...(c.subcategories || []), newSubcategory]
+        };
+      }
+      return c;
+    }));
+  };
+
+  const handleUpdateSubcategory = (categoryId: string, updatedSubcategory: Subcategory) => {
+    setCategories(prev => prev.map(c => {
+      if (c.id === categoryId) {
+        const newSubcategories = (c.subcategories || []).map(sc => sc.id === updatedSubcategory.id ? updatedSubcategory : sc);
+        return {
+          ...c,
+          subcategories: newSubcategories
+        };
+      }
+      return c;
+    }));
+  };
+
+  const onDeleteSubcategory = (categoryId: string, subcategoryId: string) => {
+    setCategories(prev => prev.map(c => {
+      if (c.id === categoryId) {
+        return {
+          ...c,
+          subcategories: (c.subcategories || []).filter(sc => sc.id !== subcategoryId)
+        };
+      }
+      return c;
+    }));
+  };
 
   if (!currentUser) {
     return <Login onLogin={handleLogin} />;
@@ -177,6 +217,9 @@ const App: React.FC = () => {
       onAddCategory={handleAddCategory}
       onUpdateCategory={handleUpdateCategory}
       onDeleteCategory={onDeleteCategory}
+      onAddSubcategory={handleAddSubcategory}
+      onUpdateSubcategory={handleUpdateSubcategory}
+      onDeleteSubcategory={onDeleteSubcategory}
     />
   );
 };

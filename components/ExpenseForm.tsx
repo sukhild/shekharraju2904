@@ -20,14 +20,23 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose }) => {
   const [categoryId, setCategoryId] = useState<string>(categories[0]?.id || '');
+  const [subcategoryId, setSubcategoryId] = useState<string>('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [projectName, setProjectName] = useState('');
   const [sitePlace, setSitePlace] = useState('');
   const [attachment, setAttachment] = useState<ExpenseAttachment | undefined>(undefined);
+  const [subcategoryAttachment, setSubcategoryAttachment] = useState<ExpenseAttachment | undefined>(undefined);
   const [error, setError] = useState('');
 
   const selectedCategory = categories.find(c => c.id === categoryId);
+  const subcategoriesForSelectedCategory = selectedCategory?.subcategories || [];
+  const selectedSubcategory = subcategoriesForSelectedCategory.find(sc => sc.id === subcategoryId);
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCategoryId(e.target.value);
+    setSubcategoryId(''); // Reset subcategory when category changes
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -41,12 +50,29 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
     }
   };
   
+  const handleSubcategoryFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      const base64 = await fileToBase64(file);
+      setSubcategoryAttachment({
+          name: file.name,
+          type: file.type,
+          data: base64
+      });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (selectedCategory?.attachmentRequired && !attachment) {
       setError(`An attachment is required for the '${selectedCategory.name}' category.`);
+      return;
+    }
+    
+    if (selectedSubcategory?.attachmentRequired && !subcategoryAttachment) {
+      setError(`An attachment is required for the '${selectedSubcategory.name}' subcategory.`);
       return;
     }
     
@@ -57,11 +83,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
 
     onSubmit({
       categoryId,
+      subcategoryId: subcategoryId || undefined,
       amount: parseFloat(amount),
       description,
       projectName,
       sitePlace,
-      attachment
+      attachment,
+      subcategoryAttachment,
     });
     onClose();
   };
@@ -73,13 +101,28 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
         <select
           id="category"
           value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
+          onChange={handleCategoryChange}
           required
           className="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         >
           {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
         </select>
       </div>
+
+      {subcategoriesForSelectedCategory.length > 0 && (
+        <div>
+            <label htmlFor="subcategory" className="block text-sm font-medium text-gray-700">Subcategory (Optional)</label>
+            <select
+              id="subcategory"
+              value={subcategoryId}
+              onChange={(e) => setSubcategoryId(e.target.value)}
+              className="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+            >
+                <option value="">-- No Subcategory --</option>
+                {subcategoriesForSelectedCategory.map(subcat => <option key={subcat.id} value={subcat.id}>{subcat.name}</option>)}
+            </select>
+        </div>
+      )}
 
       <div>
         <label htmlFor="projectName" className="block text-sm font-medium text-gray-700">Project Name</label>
@@ -136,7 +179,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Attachment {selectedCategory?.attachmentRequired && <span className="text-red-500">*</span>}</label>
+        <label className="block text-sm font-medium text-gray-700">Category Attachment {selectedCategory?.attachmentRequired && <span className="text-red-500">*</span>}</label>
         <div className="flex items-center justify-center w-full px-6 pt-5 pb-6 mt-1 border-2 border-gray-300 border-dashed rounded-md">
             <div className="space-y-1 text-center">
                 <PaperClipIcon className="w-12 h-12 mx-auto text-gray-400"/>
@@ -152,6 +195,25 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
         </div>
       </div>
       
+      {subcategoryId && (
+        <div>
+            <label className="block text-sm font-medium text-gray-700">Subcategory Attachment {selectedSubcategory?.attachmentRequired && <span className="text-red-500">*</span>}</label>
+            <div className="flex items-center justify-center w-full px-6 pt-5 pb-6 mt-1 border-2 border-gray-300 border-dashed rounded-md">
+                <div className="space-y-1 text-center">
+                    <PaperClipIcon className="w-12 h-12 mx-auto text-gray-400"/>
+                    <div className="flex text-sm text-gray-600">
+                        <label htmlFor="sub-file-upload" className="relative font-medium rounded-md cursor-pointer text-primary hover:text-primary-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
+                            <span>Upload a file</span>
+                            <input id="sub-file-upload" name="sub-file-upload" type="file" className="sr-only" onChange={handleSubcategoryFileChange} />
+                        </label>
+                        <p className="pl-1">or drag and drop</p>
+                    </div>
+                    {subcategoryAttachment ? <p className="text-xs text-gray-500">{subcategoryAttachment.name}</p> : <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>}
+                </div>
+            </div>
+        </div>
+      )}
+
       {error && <p className="text-sm text-red-600">{error}</p>}
       
       <div className="pt-4 text-right">

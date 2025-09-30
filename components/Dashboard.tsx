@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Expense, Category, Role, Status } from '../types';
+import { User, Expense, Category, Role, Status, Subcategory } from '../types';
 import Header from './Header';
 import AdminPanel from './AdminPanel';
 import RequestorDashboard from './RequestorDashboard';
@@ -14,7 +14,7 @@ interface DashboardProps {
   categories: Category[];
   expenses: Expense[];
   onLogout: () => void;
-  onAddExpense: (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName'>) => void;
+  onAddExpense: (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName' | 'referenceNumber'>) => void;
   onUpdateExpenseStatus: (expenseId: string, newStatus: Status, comment?: string) => void;
   onAddUser: (user: Omit<User, 'id'>) => void;
   onUpdateUser: (user: User) => void;
@@ -22,10 +22,13 @@ interface DashboardProps {
   onAddCategory: (category: Omit<Category, 'id'>) => void;
   onUpdateCategory: (category: Category) => void;
   onDeleteCategory: (categoryId: string) => void;
+  onAddSubcategory: (categoryId: string, subcategoryData: Omit<Subcategory, 'id'>) => void;
+  onUpdateSubcategory: (categoryId: string, updatedSubcategory: Subcategory) => void;
+  onDeleteSubcategory: (categoryId: string, subcategoryId: string) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = (props) => {
-  const { currentUser, users, categories, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, ...adminProps } = props;
+  const { currentUser, users, categories, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory } = props;
   const [activeTab, setActiveTab] = useState('overview');
 
   const getRoleSpecificTabName = () => {
@@ -45,12 +48,15 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
           <AdminPanel 
             users={users}
             categories={categories}
-            onAddUser={adminProps.onAddUser}
-            onUpdateUser={adminProps.onUpdateUser}
-            onDeleteUser={adminProps.onDeleteUser}
-            onAddCategory={adminProps.onAddCategory}
-            onUpdateCategory={adminProps.onUpdateCategory}
-            onDeleteCategory={adminProps.onDeleteCategory}
+            onAddUser={onAddUser}
+            onUpdateUser={onUpdateUser}
+            onDeleteUser={onDeleteUser}
+            onAddCategory={onAddCategory}
+            onUpdateCategory={onUpdateCategory}
+            onDeleteCategory={onDeleteCategory}
+            onAddSubcategory={onAddSubcategory}
+            onUpdateSubcategory={onUpdateSubcategory}
+            onDeleteSubcategory={onDeleteSubcategory}
           />
         );
       case Role.REQUESTOR:

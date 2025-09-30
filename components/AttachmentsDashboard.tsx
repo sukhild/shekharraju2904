@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Expense, Category, Status } from '../types';
+import { Expense, Category, Status, ExpenseAttachment } from '../types';
 import { DocumentArrowDownIcon } from './Icons';
 
 interface AttachmentsDashboardProps {
@@ -26,18 +26,21 @@ const AttachmentsDashboard: React.FC<AttachmentsDashboardProps> = ({ expenses, c
   
   const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || 'Unknown';
 
-  const expensesWithAttachments = expenses.filter(expense => {
-    if (!expense.attachment) return false;
-    
+  const allAttachments = expenses.reduce((acc, expense) => {
     const submittedDateStr = new Date(expense.submittedAt).toISOString().split('T')[0];
-    if (dateRange.from && submittedDateStr < dateRange.from) {
-      return false;
+    if ((dateRange.from && submittedDateStr < dateRange.from) || (dateRange.to && submittedDateStr > dateRange.to)) {
+      return acc;
     }
-    if (dateRange.to && submittedDateStr > dateRange.to) {
-      return false;
+    
+    if (expense.attachment) {
+        acc.push({ expense, attachment: expense.attachment, type: 'Category' });
     }
-    return true;
-  });
+    if (expense.subcategoryAttachment) {
+        acc.push({ expense, attachment: expense.subcategoryAttachment, type: 'Subcategory' });
+    }
+    return acc;
+  }, [] as { expense: Expense; attachment: ExpenseAttachment; type: string }[]);
+
 
   const StatusBadge = ({ status }: { status: Status }) => {
     const baseClasses = 'px-2 inline-flex text-xs leading-5 font-semibold rounded-full';
@@ -82,7 +85,7 @@ const AttachmentsDashboard: React.FC<AttachmentsDashboardProps> = ({ expenses, c
       
       <div className="p-6 mt-8 bg-white rounded-lg shadow">
         <div className="flow-root">
-          {expensesWithAttachments.length > 0 ? (
+          {allAttachments.length > 0 ? (
             <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
               <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                 <table className="min-w-full divide-y divide-gray-300">
@@ -93,25 +96,27 @@ const AttachmentsDashboard: React.FC<AttachmentsDashboardProps> = ({ expenses, c
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Project</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Category</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Attachment</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Attachment Name</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Attachment For</th>
                       <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0"><span className="sr-only">Download</span></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {expensesWithAttachments.map((expense) => (
-                      <tr key={expense.id}>
+                    {allAttachments.map(({ expense, attachment, type }, index) => (
+                      <tr key={`${expense.id}-${type}-${index}`}>
                         <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-0">{formatDate(expense.submittedAt)}</td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.requestorName}</td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.projectName}</td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{getCategoryName(expense.categoryId)}</td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap"><StatusBadge status={expense.status} /></td>
-                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.attachment!.name}</td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{attachment.name}</td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{type}</td>
                         <td className="relative py-4 pl-3 pr-4 text-sm font-medium text-right whitespace-nowrap sm:pr-0">
                           <a 
-                            href={`data:${expense.attachment!.type};base64,${expense.attachment!.data}`} 
-                            download={expense.attachment!.name} 
+                            href={`data:${attachment.type};base64,${attachment.data}`} 
+                            download={attachment.name} 
                             className="inline-flex items-center p-1 text-primary hover:text-primary-hover"
-                            aria-label={`Download ${expense.attachment!.name}`}
+                            aria-label={`Download ${attachment.name}`}
                           >
                             <DocumentArrowDownIcon className="w-5 h-5"/>
                           </a>

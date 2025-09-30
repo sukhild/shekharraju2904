@@ -35,19 +35,25 @@ const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ expenses, categor
     const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || 'Unknown';
 
     const handleDownloadCSV = () => {
-        const header = ['ID', 'Reference', 'Requestor', 'Project Name', 'Site/Place', 'Category', 'Amount', 'Description', 'Status', 'Submitted At'];
-        const rows = expenses.map(exp => [
-            exp.id,
-            exp.referenceNumber,
-            exp.requestorName,
-            exp.projectName,
-            exp.sitePlace,
-            getCategoryName(exp.categoryId),
-            exp.amount,
-            `"${exp.description.replace(/"/g, '""')}"`, // Escape double quotes
-            exp.status,
-            new Date(exp.submittedAt).toISOString()
-        ].join(','));
+        const header = ['ID', 'Reference', 'Requestor', 'Project Name', 'Site/Place', 'Category', 'Subcategory', 'Amount', 'Description', 'Status', 'Submitted At'];
+        const rows = expenses.map(exp => {
+            const category = categories.find(c => c.id === exp.categoryId);
+            const categoryName = category?.name || '';
+            const subcategoryName = category?.subcategories?.find(sc => sc.id === exp.subcategoryId)?.name || '';
+            return [
+                exp.id,
+                exp.referenceNumber,
+                exp.requestorName,
+                exp.projectName,
+                exp.sitePlace,
+                categoryName,
+                subcategoryName,
+                exp.amount,
+                `"${exp.description.replace(/"/g, '""')}"`, // Escape double quotes
+                exp.status,
+                new Date(exp.submittedAt).toISOString()
+            ].join(',');
+        });
 
         const csvContent = [header.join(','), ...rows].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
