@@ -17,6 +17,7 @@ interface DashboardProps {
   onLogout: () => void;
   onAddExpense: (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName' | 'referenceNumber'>) => void;
   onUpdateExpenseStatus: (expenseId: string, newStatus: Status, comment?: string) => void;
+  onBulkUpdateExpenseStatus: (expenseIds: string[], newStatus: Status, comment?: string) => void;
   onAddUser: (user: Omit<User, 'id'>) => void;
   onUpdateUser: (user: User) => void;
   onDeleteUser: (userId: string) => void;
@@ -30,7 +31,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = (props) => {
-  const { currentUser, users, categories, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog, onToggleExpensePriority } = props;
+  const { currentUser, users, categories, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog, onToggleExpensePriority, onBulkUpdateExpenseStatus } = props;
   const [activeTab, setActiveTab] = useState('overview');
 
   const getRoleSpecificTabName = () => {
@@ -79,6 +80,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             expenses={toVerify}
             categories={categories}
             onUpdateExpenseStatus={onUpdateExpenseStatus}
+            onBulkUpdateExpenseStatus={onBulkUpdateExpenseStatus}
             onToggleExpensePriority={onToggleExpensePriority}
           />
         );
@@ -89,6 +91,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             expenses={toApprove}
             categories={categories}
             onUpdateExpenseStatus={onUpdateExpenseStatus}
+            onBulkUpdateExpenseStatus={onBulkUpdateExpenseStatus}
             onToggleExpensePriority={onToggleExpensePriority}
           />
         );

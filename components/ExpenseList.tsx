@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Expense, Category, Status, User } from '../types';
 import { EyeIcon, StarIcon } from './Icons';
 import Modal from './Modal';
@@ -12,6 +12,10 @@ interface ExpenseListProps {
   userRole?: User['role'];
   onUpdateStatus?: (expenseId: string, newStatus: Status, comment?: string) => void;
   onToggleExpensePriority?: (expenseId: string) => void;
+  isSelectionEnabled?: boolean;
+  selectedExpenseIds?: string[];
+  onToggleSelection?: (expenseId: string) => void;
+  onToggleSelectAll?: () => void;
 }
 
 const formatDate = (isoString: string) => {
@@ -24,9 +28,22 @@ const formatDate = (isoString: string) => {
     return `${day}-${month}-${year}`;
 };
 
-const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, emptyMessage, userRole, onUpdateStatus, onToggleExpensePriority }) => {
+const ExpenseList: React.FC<ExpenseListProps> = ({ 
+  expenses, categories, title, emptyMessage, userRole, onUpdateStatus, onToggleExpensePriority,
+  isSelectionEnabled = false, selectedExpenseIds = [], onToggleSelection, onToggleSelectAll
+}) => {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
-  
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      const numSelected = selectedExpenseIds.length;
+      const numItems = expenses.length;
+      headerCheckboxRef.current.checked = numSelected > 0 && numSelected === numItems;
+      headerCheckboxRef.current.indeterminate = numSelected > 0 && numSelected < numItems;
+    }
+  }, [selectedExpenseIds, expenses.length]);
+
   const getCategoryAndSubcategoryName = (expense: Expense): string => {
     const category = categories.find(c => c.id === expense.categoryId);
     if (!category) return 'Unknown';
@@ -61,6 +78,16 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, 
               <table className="min-w-full divide-y divide-gray-300">
                 <thead>
                   <tr>
+                    {isSelectionEnabled && onToggleSelectAll && (
+                      <th scope="col" className="relative px-7 sm:w-12 sm:px-6">
+                        <input
+                          type="checkbox"
+                          className="absolute w-4 h-4 -mt-2 text-primary border-gray-300 rounded left-4 top-1/2 focus:ring-primary"
+                          ref={headerCheckboxRef}
+                          onChange={onToggleSelectAll}
+                        />
+                      </th>
+                    )}
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Date</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Reference #</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Project Name</th>
@@ -74,7 +101,17 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, 
                 </thead>
                 <tbody className="divide-y divide-gray-200">
                   {expenses.map((expense) => (
-                    <tr key={expense.id}>
+                    <tr key={expense.id} className={selectedExpenseIds.includes(expense.id) ? 'bg-primary-light' : ''}>
+                      {isSelectionEnabled && onToggleSelection && (
+                        <td className="relative px-7 sm:w-12 sm:px-6">
+                          <input
+                            type="checkbox"
+                            className="absolute w-4 h-4 -mt-2 text-primary border-gray-300 rounded left-4 top-1/2 focus:ring-primary"
+                            checked={selectedExpenseIds.includes(expense.id)}
+                            onChange={() => onToggleSelection(expense.id)}
+                          />
+                        </td>
+                      )}
                       <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-0">{formatDate(expense.submittedAt)}</td>
                       <td className="px-3 py-4 text-sm font-mono text-gray-500 whitespace-nowrap">
                         <div className="flex items-center">

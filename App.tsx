@@ -150,6 +150,56 @@ const App: React.FC = () => {
     });
   };
 
+  const handleBulkUpdateExpenseStatus = (expenseIds: string[], newStatus: Status, comment?: string) => {
+    if (!currentUser) return;
+
+    setExpenses(prevExpenses => {
+        const updatedExpenses = prevExpenses.map(expense => {
+            if (expenseIds.includes(expense.id)) {
+                const oldStatus = expense.status;
+                const newExpense = { ...expense, status: newStatus };
+                
+                let action = '';
+                if (newStatus === Status.PENDING_APPROVAL) action = 'Verified';
+                else if (newStatus === Status.APPROVED) action = 'Approved';
+                else if (newStatus === Status.REJECTED) action = 'Rejected';
+
+                newExpense.history = [...expense.history, {
+                    actorId: currentUser.id,
+                    actorName: currentUser.name,
+                    action,
+                    timestamp: new Date().toISOString(),
+                    comment
+                }];
+
+                // Notifications for each expense
+                const requestor = users.find(u => u.id === newExpense.requestorId);
+                const category = categories.find(c => c.id === newExpense.categoryId);
+                const subcategory = category?.subcategories?.find(sc => sc.id === newExpense.subcategoryId);
+
+                if (requestor && category) {
+                    Notifications.notifyOnStatusChange(requestor, newExpense, category.name, subcategory?.name, comment);
+                    if (oldStatus === Status.PENDING_VERIFICATION && newStatus === Status.PENDING_APPROVAL) {
+                        const approvers = users.filter(u => u.role === Role.APPROVER);
+                        Notifications.notifyApproversOnVerification(approvers, newExpense, category.name, subcategory?.name);
+                    }
+                }
+                
+                return newExpense;
+            }
+            return expense;
+        });
+        return updatedExpenses;
+    });
+
+    // Audit Log for bulk action
+    let actionVerb = '';
+    if (newStatus === Status.PENDING_APPROVAL) actionVerb = 'Verified';
+    else if (newStatus === Status.APPROVED) actionVerb = 'Approved';
+    else if (newStatus === Status.REJECTED) actionVerb = 'Rejected';
+    addAuditLogEntry('Bulk Expense Update', `Bulk action: ${actionVerb} ${expenseIds.length} expense(s).`);
+  };
+
   const handleAddUser = (userData: Omit<User, 'id'>) => {
     const newUser: User = { ...userData, id: `user-${Date.now()}` };
     setUsers(prev => [...prev, newUser]);
@@ -267,6 +317,7 @@ const App: React.FC = () => {
       onLogout={handleLogout}
       onAddExpense={handleAddExpense}
       onUpdateExpenseStatus={handleUpdateExpenseStatus}
+      onBulkUpdateExpenseStatus={handleBulkUpdateExpenseStatus}
       onAddUser={handleAddUser}
       onUpdateUser={handleUpdateUser}
       onDeleteUser={onDeleteUser}
