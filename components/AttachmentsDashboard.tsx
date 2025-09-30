@@ -7,6 +7,16 @@ interface AttachmentsDashboardProps {
   categories: Category[];
 }
 
+const formatDate = (isoString: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+};
+
 const AttachmentsDashboard: React.FC<AttachmentsDashboardProps> = ({ expenses, categories }) => {
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
@@ -80,6 +90,7 @@ const AttachmentsDashboard: React.FC<AttachmentsDashboardProps> = ({ expenses, c
                     <tr>
                       <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Date</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Requestor</th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Project</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Category</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Status</th>
                       <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Attachment</th>
@@ -89,8 +100,9 @@ const AttachmentsDashboard: React.FC<AttachmentsDashboardProps> = ({ expenses, c
                   <tbody className="divide-y divide-gray-200">
                     {expensesWithAttachments.map((expense) => (
                       <tr key={expense.id}>
-                        <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-0">{new Date(expense.submittedAt).toLocaleDateString()}</td>
+                        <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-0">{formatDate(expense.submittedAt)}</td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.requestorName}</td>
+                        <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.projectName}</td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{getCategoryName(expense.categoryId)}</td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap"><StatusBadge status={expense.status} /></td>
                         <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.attachment!.name}</td>

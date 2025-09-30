@@ -50,6 +50,8 @@ export interface Expense {
   categoryId: string;
   amount: number;
   description: string;
+  projectName: string;
+  sitePlace: string;
   submittedAt: string; // ISO string
   status: Status;
   attachment?: ExpenseAttachment;

@@ -7,6 +7,16 @@ interface OverviewDashboardProps {
   categories: Category[];
 }
 
+const formatDate = (isoString: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+};
+
 const StatCard: React.FC<{ title: string; value: string | number; }> = ({ title, value }) => (
     <div className="px-4 py-5 overflow-hidden bg-white rounded-lg shadow sm:p-6">
         <dt className="text-sm font-medium text-gray-500 truncate">{title}</dt>
@@ -25,11 +35,13 @@ const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ expenses, categor
     const getCategoryName = (id: string) => categories.find(c => c.id === id)?.name || 'Unknown';
 
     const handleDownloadCSV = () => {
-        const header = ['ID', 'Reference', 'Requestor', 'Category', 'Amount', 'Description', 'Status', 'Submitted At'];
+        const header = ['ID', 'Reference', 'Requestor', 'Project Name', 'Site/Place', 'Category', 'Amount', 'Description', 'Status', 'Submitted At'];
         const rows = expenses.map(exp => [
             exp.id,
             exp.referenceNumber,
             exp.requestorName,
+            exp.projectName,
+            exp.sitePlace,
             getCategoryName(exp.categoryId),
             exp.amount,
             `"${exp.description.replace(/"/g, '""')}"`, // Escape double quotes
@@ -98,7 +110,7 @@ const OverviewDashboard: React.FC<OverviewDashboardProps> = ({ expenses, categor
                                     <span className="font-mono">{expense.referenceNumber}</span> - {expense.requestorName}
                                 </p>
                                 <p className="text-sm text-gray-500 truncate">
-                                    {getCategoryName(expense.categoryId)} on {new Date(expense.submittedAt).toLocaleDateString()}
+                                    Project: {expense.projectName} on {formatDate(expense.submittedAt)}
                                 </p>
                             </div>
                             <div>

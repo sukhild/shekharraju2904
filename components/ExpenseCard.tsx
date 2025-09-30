@@ -10,6 +10,26 @@ interface ExpenseCardProps {
   onClose?: () => void;
 }
 
+const formatDate = (isoString: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+};
+
+const formatDateTime = (isoString: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    return `${formatDate(isoString)} ${hours}:${minutes}:${seconds}`;
+};
+
+
 const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRole, onUpdateStatus, onClose }) => {
     const [rejectionComment, setRejectionComment] = useState('');
     const [showRejectionInput, setShowRejectionInput] = useState(false);
@@ -38,34 +58,18 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRo
     const canTakeAction = (userRole === Role.VERIFIER && expense.status === Status.PENDING_VERIFICATION) ||
                           (userRole === Role.APPROVER && expense.status === Status.PENDING_APPROVAL);
 
-    const shouldShowAttachment = () => {
-        if (!expense.attachment) {
-            return false;
-        }
-
-        const isPending = expense.status === Status.PENDING_VERIFICATION || expense.status === Status.PENDING_APPROVAL;
-
-        if (isPending) {
-            return true; // All roles can see it during pending stages
-        }
-        
-        // After approval/rejection, only verifiers, approvers, and admins can see it.
-        if (userRole === Role.VERIFIER || userRole === Role.APPROVER || userRole === Role.ADMIN) {
-            return true;
-        }
-
-        // Requestor cannot see it after it's processed.
-        return false;
-    };
+    const showAttachment = !!expense.attachment;
 
     return (
         <div className="space-y-4">
             <div className="flex items-start justify-between">
                 <div>
                     <h4 className="font-medium text-gray-800">Requestor: <span className="font-normal text-gray-600">{expense.requestorName}</span></h4>
+                    <h4 className="font-medium text-gray-800">Project: <span className="font-normal text-gray-600">{expense.projectName}</span></h4>
+                    <h4 className="font-medium text-gray-800">Site/Place: <span className="font-normal text-gray-600">{expense.sitePlace}</span></h4>
                     <h4 className="font-medium text-gray-800">Category: <span className="font-normal text-gray-600">{categoryName}</span></h4>
                     <h4 className="font-medium text-gray-800">Amount: <span className="font-normal text-gray-600">₹{expense.amount.toLocaleString('en-IN')}</span></h4>
-                    <h4 className="font-medium text-gray-800">Submitted: <span className="font-normal text-gray-600">{new Date(expense.submittedAt).toLocaleString()}</span></h4>
+                    <h4 className="font-medium text-gray-800">Submitted: <span className="font-normal text-gray-600">{formatDateTime(expense.submittedAt)}</span></h4>
                 </div>
                 <div className="pl-4 text-right">
                     <p className="text-sm font-semibold text-gray-500">Reference #</p>
@@ -78,7 +82,7 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRo
                 <p className="mt-1 text-sm text-gray-600">{expense.description}</p>
             </div>
             
-            {shouldShowAttachment() && expense.attachment && (
+            {showAttachment && expense.attachment && (
                 <div className="p-3 border rounded-md">
                      <a 
                         href={`data:${expense.attachment.type};base64,${expense.attachment.data}`} 
@@ -101,7 +105,7 @@ const ExpenseCard: React.FC<ExpenseCardProps> = ({ expense, categoryName, userRo
                         {expense.history.map((item, index) => (
                             <div key={index}>
                                 <p className="text-sm font-medium text-gray-800">{item.action} by {item.actorName}</p>
-                                <p className="text-xs text-gray-500">{new Date(item.timestamp).toLocaleString()}</p>
+                                <p className="text-xs text-gray-500">{formatDateTime(item.timestamp)}</p>
                                 {item.comment && <p className="pl-2 mt-1 text-xs italic text-gray-600 border-l-2 border-gray-300">"{item.comment}"</p>}
                             </div>
                         ))}

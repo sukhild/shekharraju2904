@@ -37,6 +37,8 @@ const formatDateTime = (isoString: string) => {
 const getExpenseDetailsForEmail = (expense: Expense, categoryName: string): string => {
   return `
     Reference: ${expense.referenceNumber}
+    Project: ${expense.projectName}
+    Site/Place: ${expense.sitePlace}
     Amount: ₹${expense.amount.toLocaleString('en-IN')}
     Category: ${categoryName}
     Description: ${expense.description}

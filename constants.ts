@@ -23,6 +23,8 @@ export const EXPENSES: Expense[] = [
     categoryId: 'cat-1',
     amount: 350,
     description: 'Purchase of new stationery for the team.',
+    projectName: 'Q2 Office Refresh',
+    sitePlace: 'Head Office',
     submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     status: Status.APPROVED,
     history: [
@@ -38,6 +40,8 @@ export const EXPENSES: Expense[] = [
     categoryId: 'cat-2',
     amount: 8500,
     description: 'Flight tickets for client meeting in Mumbai.',
+    projectName: 'Project Alpha Client Visit',
+    sitePlace: 'Mumbai',
     submittedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     status: Status.REJECTED,
     attachment: { name: 'flight-ticket.pdf', type: 'application/pdf', data: '' },
@@ -55,6 +59,8 @@ export const EXPENSES: Expense[] = [
     categoryId: 'cat-3',
     amount: 1200,
     description: 'Team lunch.',
+    projectName: 'Internal Team Building',
+    sitePlace: 'Local Restaurant',
     submittedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     status: Status.PENDING_VERIFICATION,
     history: [
@@ -69,6 +75,8 @@ export const EXPENSES: Expense[] = [
     categoryId: 'cat-4',
     amount: 1500,
     description: 'Annual subscription for design tool.',
+    projectName: 'Design Team Budget',
+    sitePlace: 'N/A',
     submittedAt: new Date().toISOString(),
     status: Status.PENDING_APPROVAL,
     history: [

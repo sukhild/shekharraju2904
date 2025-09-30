@@ -22,6 +22,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
   const [categoryId, setCategoryId] = useState<string>(categories[0]?.id || '');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
+  const [projectName, setProjectName] = useState('');
+  const [sitePlace, setSitePlace] = useState('');
   const [attachment, setAttachment] = useState<ExpenseAttachment | undefined>(undefined);
   const [error, setError] = useState('');
 
@@ -48,7 +50,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
       return;
     }
     
-    if (!categoryId || !amount || !description) {
+    if (!categoryId || !amount || !description || !projectName || !sitePlace) {
         setError("All fields are required.");
         return;
     }
@@ -57,6 +59,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
       categoryId,
       amount: parseFloat(amount),
       description,
+      projectName,
+      sitePlace,
       attachment
     });
     onClose();
@@ -70,10 +74,35 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, onSubmit, onClose
           id="category"
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
+          required
           className="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
         >
           {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
         </select>
+      </div>
+
+      <div>
+        <label htmlFor="projectName" className="block text-sm font-medium text-gray-700">Project Name</label>
+        <input
+          type="text"
+          id="projectName"
+          value={projectName}
+          onChange={(e) => setProjectName(e.target.value)}
+          required
+          className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+        />
+      </div>
+
+       <div>
+        <label htmlFor="sitePlace" className="block text-sm font-medium text-gray-700">Site/Place</label>
+        <input
+          type="text"
+          id="sitePlace"
+          value={sitePlace}
+          onChange={(e) => setSitePlace(e.target.value)}
+          required
+          className="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"
+        />
       </div>
 
       <div>

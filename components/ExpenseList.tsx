@@ -13,6 +13,16 @@ interface ExpenseListProps {
   onUpdateStatus?: (expenseId: string, newStatus: Status, comment?: string) => void;
 }
 
+const formatDate = (isoString: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = monthNames[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+};
+
 const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, emptyMessage, userRole, onUpdateStatus }) => {
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   
@@ -41,6 +51,8 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, 
                   <tr>
                     <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Date</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Reference #</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Project Name</th>
+                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Site/Place</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Requestor</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Category</th>
                     <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Amount (₹)</th>
@@ -51,8 +63,10 @@ const ExpenseList: React.FC<ExpenseListProps> = ({ expenses, categories, title, 
                 <tbody className="divide-y divide-gray-200">
                   {expenses.map((expense) => (
                     <tr key={expense.id}>
-                      <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-0">{new Date(expense.submittedAt).toLocaleDateString()}</td>
+                      <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 whitespace-nowrap sm:pl-0">{formatDate(expense.submittedAt)}</td>
                       <td className="px-3 py-4 text-sm font-mono text-gray-500 whitespace-nowrap">{expense.referenceNumber}</td>
+                      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.projectName}</td>
+                      <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.sitePlace}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.requestorName}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{getCategoryName(expense.categoryId)}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.amount.toLocaleString('en-IN')}</td>
