@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
-import { User, Expense, Category, Role, Status, Subcategory } from './types';
+import { User, Expense, Category, Role, Status, Subcategory, AuditLogItem } from './types';
 import { USERS, CATEGORIES, EXPENSES } from './constants';
 import * as Notifications from './notifications';
 
@@ -19,6 +19,7 @@ const App: React.FC = () => {
   const [users, setUsers] = useState<User[]>(USERS);
   const [categories, setCategories] = useState<Category[]>(CATEGORIES);
   const [expenses, setExpenses] = useState<Expense[]>(EXPENSES);
+  const [auditLog, setAuditLog] = useState<AuditLogItem[]>([]);
 
   useEffect(() => {
     // Attempt to load user from local storage
@@ -27,6 +28,20 @@ const App: React.FC = () => {
       setCurrentUser(JSON.parse(storedUser));
     }
   }, []);
+
+  const addAuditLogEntry = (action: string, details: string) => {
+    if (!currentUser) return; // Should not happen if an admin action is taken
+    const newLogEntry: AuditLogItem = {
+      id: `log-${Date.now()}-${Math.random()}`,
+      timestamp: new Date().toISOString(),
+      actorId: currentUser.id,
+      actorName: currentUser.name,
+      action,
+      details,
+    };
+    setAuditLog(prev => [newLogEntry, ...prev]);
+  };
+
 
   const handleLogin = (username: string, password_input: string): boolean => {
     const user = users.find(u => u.username === username && u.password === password_input);
@@ -137,30 +152,43 @@ const App: React.FC = () => {
   const handleAddUser = (userData: Omit<User, 'id'>) => {
     const newUser: User = { ...userData, id: `user-${Date.now()}` };
     setUsers(prev => [...prev, newUser]);
+    addAuditLogEntry('User Created', `Created user '${newUser.username}' with role '${newUser.role}'.`);
   };
   
   const handleUpdateUser = (updatedUser: User) => {
     setUsers(prev => prev.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u));
+    addAuditLogEntry('User Updated', `Updated profile for user '${updatedUser.username}'.`);
   };
   
   const onDeleteUser = (userId: string) => {
+    const userToDelete = users.find(u => u.id === userId);
     setUsers(prev => prev.filter(u => u.id !== userId));
+    if (userToDelete) {
+      addAuditLogEntry('User Deleted', `Deleted user '${userToDelete.username}'.`);
+    }
   };
   
   const handleAddCategory = (categoryData: Omit<Category, 'id'>) => {
     const newCategory: Category = { ...categoryData, id: `cat-${Date.now()}` };
     setCategories(prev => [...prev, newCategory]);
+    addAuditLogEntry('Category Created', `Created category '${newCategory.name}'.`);
   };
   
   const handleUpdateCategory = (updatedCategory: Category) => {
     setCategories(prev => prev.map(c => c.id === updatedCategory.id ? updatedCategory : c));
+    addAuditLogEntry('Category Updated', `Updated category '${updatedCategory.name}'.`);
   };
   
   const onDeleteCategory = (categoryId: string) => {
+    const categoryToDelete = categories.find(c => c.id === categoryId);
     setCategories(prev => prev.filter(c => c.id !== categoryId));
+     if (categoryToDelete) {
+      addAuditLogEntry('Category Deleted', `Deleted category '${categoryToDelete.name}'.`);
+    }
   };
 
   const handleAddSubcategory = (categoryId: string, subcategoryData: Omit<Subcategory, 'id'>) => {
+    const parentCategory = categories.find(c => c.id === categoryId);
     const newSubcategory: Subcategory = { ...subcategoryData, id: `sub-cat-${Date.now()}` };
     setCategories(prev => prev.map(c => {
       if (c.id === categoryId) {
@@ -171,9 +199,13 @@ const App: React.FC = () => {
       }
       return c;
     }));
+    if (parentCategory) {
+        addAuditLogEntry('Subcategory Created', `Created subcategory '${newSubcategory.name}' under '${parentCategory.name}'.`);
+    }
   };
 
   const handleUpdateSubcategory = (categoryId: string, updatedSubcategory: Subcategory) => {
+    const parentCategory = categories.find(c => c.id === categoryId);
     setCategories(prev => prev.map(c => {
       if (c.id === categoryId) {
         const newSubcategories = (c.subcategories || []).map(sc => sc.id === updatedSubcategory.id ? updatedSubcategory : sc);
@@ -184,9 +216,14 @@ const App: React.FC = () => {
       }
       return c;
     }));
+     if (parentCategory) {
+      addAuditLogEntry('Subcategory Updated', `Updated subcategory '${updatedSubcategory.name}' under '${parentCategory.name}'.`);
+    }
   };
 
   const onDeleteSubcategory = (categoryId: string, subcategoryId: string) => {
+    const parentCategory = categories.find(c => c.id === categoryId);
+    const subcategoryToDelete = parentCategory?.subcategories?.find(sc => sc.id === subcategoryId);
     setCategories(prev => prev.map(c => {
       if (c.id === categoryId) {
         return {
@@ -196,6 +233,9 @@ const App: React.FC = () => {
       }
       return c;
     }));
+    if (parentCategory && subcategoryToDelete) {
+      addAuditLogEntry('Subcategory Deleted', `Deleted subcategory '${subcategoryToDelete.name}' from '${parentCategory.name}'.`);
+    }
   };
 
   if (!currentUser) {
@@ -208,6 +248,7 @@ const App: React.FC = () => {
       users={users}
       categories={categories}
       expenses={expenses}
+      auditLog={auditLog}
       onLogout={handleLogout}
       onAddExpense={handleAddExpense}
       onUpdateExpenseStatus={handleUpdateExpenseStatus}

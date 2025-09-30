@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Expense, Category, Role, Status, Subcategory } from '../types';
+import { User, Expense, Category, Role, Status, Subcategory, AuditLogItem } from '../types';
 import Header from './Header';
 import AdminPanel from './AdminPanel';
 import RequestorDashboard from './RequestorDashboard';
@@ -13,6 +13,7 @@ interface DashboardProps {
   users: User[];
   categories: Category[];
   expenses: Expense[];
+  auditLog: AuditLogItem[];
   onLogout: () => void;
   onAddExpense: (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName' | 'referenceNumber'>) => void;
   onUpdateExpenseStatus: (expenseId: string, newStatus: Status, comment?: string) => void;
@@ -28,7 +29,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = (props) => {
-  const { currentUser, users, categories, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory } = props;
+  const { currentUser, users, categories, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog } = props;
   const [activeTab, setActiveTab] = useState('overview');
 
   const getRoleSpecificTabName = () => {
@@ -48,6 +49,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
           <AdminPanel 
             users={users}
             categories={categories}
+            auditLog={auditLog}
             onAddUser={onAddUser}
             onUpdateUser={onUpdateUser}
             onDeleteUser={onDeleteUser}

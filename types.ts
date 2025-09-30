@@ -66,3 +66,12 @@ export interface Expense {
   subcategoryAttachment?: ExpenseAttachment;
   history: HistoryItem[];
 }
+
+export interface AuditLogItem {
+  id: string;
+  timestamp: string; // ISO string
+  actorId: string;
+  actorName: string;
+  action: string;
+  details: string;
+}

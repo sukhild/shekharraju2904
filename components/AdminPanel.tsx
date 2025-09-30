@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { User, Category, Role, Subcategory } from '../types';
+import { User, Category, Role, Subcategory, AuditLogItem } from '../types';
 import { PencilIcon, TrashIcon, PlusIcon } from './Icons';
 import Modal from './Modal';
 
 interface AdminPanelProps {
   users: User[];
   categories: Category[];
+  auditLog: AuditLogItem[];
   onAddUser: (user: Omit<User, 'id'>) => void;
   onUpdateUser: (user: User) => void;
   onDeleteUser: (userId: string) => void;
@@ -18,7 +19,7 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({
-  users, categories, onAddUser, onUpdateUser, onDeleteUser,
+  users, categories, auditLog, onAddUser, onUpdateUser, onDeleteUser,
   onAddCategory, onUpdateCategory, onDeleteCategory,
   onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory
 }) => {
@@ -105,6 +106,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     setEditingSubcategory(null);
   }
 
+  const formatDateTime = (isoString: string) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+
 
   return (
     <div>
@@ -128,6 +140,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             className={`${activeTab === 'subcategories' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
           >
             Subcategory Management
+          </button>
+           <button
+            onClick={() => setActiveTab('audit')}
+            className={`${activeTab === 'audit' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+          >
+            Audit Log
           </button>
         </nav>
       </div>
@@ -271,6 +289,50 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                                         </tr>
                                       ))
                                     ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'audit' && (
+          <div>
+            <div className="sm:flex sm:items-center">
+              <div className="sm:flex-auto">
+                <h3 className="text-base font-semibold leading-6 text-gray-900">Audit Log</h3>
+                <p className="mt-2 text-sm text-gray-700">A history of all administrative actions performed in the system.</p>
+              </div>
+            </div>
+            <div className="flow-root mt-8">
+                <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                            <table className="min-w-full bg-white divide-y divide-gray-300">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Timestamp</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Performed By</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Action</th>
+                                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {auditLog.map((log) => (
+                                        <tr key={log.id}>
+                                            <td className="py-4 pl-4 pr-3 text-sm text-gray-500 whitespace-nowrap sm:pl-6">{formatDateTime(log.timestamp)}</td>
+                                            <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{log.actorName}</td>
+                                            <td className="px-3 py-4 text-sm font-medium text-gray-900 whitespace-nowrap">{log.action}</td>
+                                            <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{log.details}</td>
+                                        </tr>
+                                    ))}
+                                    {auditLog.length === 0 && (
+                                      <tr>
+                                        <td colSpan={4} className="py-8 text-center text-sm text-gray-500">No audit log entries found.</td>
+                                      </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
