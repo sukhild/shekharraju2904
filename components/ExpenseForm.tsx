@@ -29,6 +29,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
   const [siteId, setSiteId] = useState<string>(sites[0]?.id || '');
   const [attachment, setAttachment] = useState<ExpenseAttachment | undefined>(undefined);
   const [subcategoryAttachment, setSubcategoryAttachment] = useState<ExpenseAttachment | undefined>(undefined);
+  const [showSubcategoryAttachmentInput, setShowSubcategoryAttachmentInput] = useState(false);
   const [error, setError] = useState('');
 
   const categoryAttachmentInputRef = useRef<HTMLInputElement>(null);
@@ -38,9 +39,32 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
   const subcategoriesForSelectedCategory = selectedCategory?.subcategories || [];
   const selectedSubcategory = subcategoriesForSelectedCategory.find(sc => sc.id === subcategoryId);
 
+  const handleRemoveSubcategoryAttachment = () => {
+    setSubcategoryAttachment(undefined);
+    if (subcategoryAttachmentInputRef.current) {
+        subcategoryAttachmentInputRef.current.value = '';
+    }
+  };
+  
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setCategoryId(e.target.value);
     setSubcategoryId(''); // Reset subcategory when category changes
+    setShowSubcategoryAttachmentInput(false); // Reset toggle
+    handleRemoveSubcategoryAttachment(); // Clear file
+  };
+
+  const handleSubcategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSubcategoryId(e.target.value);
+    setShowSubcategoryAttachmentInput(false); // Reset toggle
+    handleRemoveSubcategoryAttachment(); // Clear file
+  };
+
+  const handleToggleSubcategoryAttachment = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setShowSubcategoryAttachmentInput(isChecked);
+    if (!isChecked) {
+        handleRemoveSubcategoryAttachment(); // clear file if unchecked
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,13 +98,6 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
     }
   };
 
-  const handleRemoveSubcategoryAttachment = () => {
-    setSubcategoryAttachment(undefined);
-    if (subcategoryAttachmentInputRef.current) {
-        subcategoryAttachmentInputRef.current.value = '';
-    }
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -90,8 +107,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
       return;
     }
     
-    // As requested, subcategory attachment validation is removed to make it optional for the requestor.
-    // The UI hint (*) will still show based on admin settings.
+    // Subcategory attachment validation is removed to make it optional for the requestor.
     
     if (!categoryId || !amount || !description || !projectId || !siteId) {
         setError("All fields are required.");
@@ -132,7 +148,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
             <select
               id="subcategory"
               value={subcategoryId}
-              onChange={(e) => setSubcategoryId(e.target.value)}
+              onChange={handleSubcategoryChange}
               className="block w-full py-2 pl-3 pr-10 mt-1 text-base border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
             >
                 <option value="">-- No Subcategory --</option>
@@ -223,29 +239,52 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
       </div>
       
       {subcategoryId && (
-        <div>
-            <label className="block text-sm font-medium text-gray-700">Subcategory Attachment {selectedSubcategory?.attachmentRequired && <span className="text-red-500">*</span>}</label>
-            <div className="flex items-center justify-center w-full px-6 pt-5 pb-6 mt-1 border-2 border-gray-300 border-dashed rounded-md">
-                <div className="space-y-1 text-center">
-                    { !subcategoryAttachment && <PaperClipIcon className="w-12 h-12 mx-auto text-gray-400"/> }
-                    <div className="flex justify-center text-sm text-gray-600">
-                        <label htmlFor="sub-file-upload" className="relative font-medium rounded-md cursor-pointer text-primary hover:text-primary-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
-                            <span>Upload a file</span>
-                            <input ref={subcategoryAttachmentInputRef} id="sub-file-upload" name="sub-file-upload" type="file" className="sr-only" onChange={handleSubcategoryFileChange} />
-                        </label>
-                        {!subcategoryAttachment && <p className="pl-1">or drag and drop</p>}
-                    </div>
-                    {subcategoryAttachment ? (
-                        <div className="flex items-center justify-center pt-1 text-xs text-gray-600">
-                            <PaperClipIcon className="w-4 h-4 mr-1"/>
-                            <span className="font-medium truncate">{subcategoryAttachment.name}</span>
-                            <button type="button" onClick={handleRemoveSubcategoryAttachment} className="ml-2 text-red-500 hover:text-red-700">
-                                <XCircleIcon className="w-4 h-4" />
-                            </button>
-                        </div>
-                    ) : <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>}
+        <div className="p-3 space-y-4 border border-gray-200 rounded-md bg-neutral-50">
+            <div className="relative flex items-start">
+                <div className="flex items-center h-5">
+                    <input 
+                        id="add-sub-attachment-toggle" 
+                        name="add-sub-attachment-toggle" 
+                        type="checkbox" 
+                        checked={showSubcategoryAttachmentInput} 
+                        onChange={handleToggleSubcategoryAttachment}
+                        className="w-4 h-4 border-gray-300 rounded text-primary focus:ring-primary"
+                    />
+                </div>
+                <div className="ml-3 text-sm">
+                    <label htmlFor="add-sub-attachment-toggle" className="font-medium text-gray-700">
+                        Add Subcategory Attachment {selectedSubcategory?.attachmentRequired && <span className="text-red-500">*</span>}
+                    </label>
+                    <p className="text-xs text-gray-500">
+                        This attachment is optional for submission.
+                        {selectedSubcategory?.attachmentRequired && " (Recommended as per policy)"}
+                    </p>
                 </div>
             </div>
+            
+            {showSubcategoryAttachmentInput && (
+                <div className="flex items-center justify-center w-full px-6 pt-5 pb-6 bg-white border-2 border-gray-300 border-dashed rounded-md">
+                    <div className="space-y-1 text-center">
+                        { !subcategoryAttachment && <PaperClipIcon className="w-12 h-12 mx-auto text-gray-400"/> }
+                        <div className="flex justify-center text-sm text-gray-600">
+                            <label htmlFor="sub-file-upload" className="relative font-medium rounded-md cursor-pointer text-primary hover:text-primary-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
+                                <span>Upload a file</span>
+                                <input ref={subcategoryAttachmentInputRef} id="sub-file-upload" name="sub-file-upload" type="file" className="sr-only" onChange={handleSubcategoryFileChange} />
+                            </label>
+                            {!subcategoryAttachment && <p className="pl-1">or drag and drop</p>}
+                        </div>
+                        {subcategoryAttachment ? (
+                            <div className="flex items-center justify-center pt-1 text-xs text-gray-600">
+                                <PaperClipIcon className="w-4 h-4 mr-1"/>
+                                <span className="font-medium truncate">{subcategoryAttachment.name}</span>
+                                <button type="button" onClick={handleRemoveSubcategoryAttachment} className="ml-2 text-red-500 hover:text-red-700">
+                                    <XCircleIcon className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ) : <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>}
+                    </div>
+                </div>
+            )}
         </div>
       )}
 
