@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [sites, setSites] = useState<Site[]>(SITES);
   const [expenses, setExpenses] = useState<Expense[]>(EXPENSES);
   const [auditLog, setAuditLog] = useState<AuditLogItem[]>([]);
+  const [isDailyBackupEnabled, setDailyBackupEnabled] = useState<boolean>(false);
 
   useEffect(() => {
     // Attempt to load user from local storage
@@ -30,6 +31,45 @@ const App: React.FC = () => {
       setCurrentUser(JSON.parse(storedUser));
     }
   }, []);
+
+  // Effect for daily backup trigger simulation
+  useEffect(() => {
+    if (!isDailyBackupEnabled) {
+      return; // Do nothing if the feature is disabled
+    }
+
+    const backupInterval = setInterval(() => {
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const currentDayStr = now.toISOString().split('T')[0];
+
+      // Reset the trigger flag for a new day
+      if (localStorage.getItem('lastBackupDate') !== currentDayStr) {
+        localStorage.removeItem('backupTriggeredToday');
+      }
+
+      // Check for backup time (00:05) and ensure it hasn't already been triggered today
+      if (hours === 0 && minutes === 5 && !localStorage.getItem('backupTriggeredToday')) {
+        console.log("Backup time reached (00:05). Triggering backup email...");
+
+        const backupData = { users, categories, projects, sites, expenses, auditLog };
+        const backupJSON = JSON.stringify(backupData, null, 2);
+        const admins = users.filter(u => u.role === Role.ADMIN);
+
+        if (admins.length > 0) {
+          Notifications.sendBackupEmail(admins, backupJSON);
+        }
+
+        // Set flags to prevent re-triggering for today
+        localStorage.setItem('backupTriggeredToday', 'true');
+        localStorage.setItem('lastBackupDate', currentDayStr);
+      }
+    }, 30 * 1000); // Check every 30 seconds
+
+    return () => clearInterval(backupInterval);
+  }, [isDailyBackupEnabled, users, categories, projects, sites, expenses, auditLog]);
+
 
   const addAuditLogEntry = (action: string, details: string) => {
     if (!currentUser) return; // Should not happen if an admin action is taken
@@ -241,6 +281,10 @@ const App: React.FC = () => {
   };
   
   const onDeleteCategory = (categoryId: string) => {
+    if (expenses.some(e => e.categoryId === categoryId)) {
+      alert("This category cannot be deleted because it is associated with existing expenses.");
+      return;
+    }
     const categoryToDelete = categories.find(c => c.id === categoryId);
     setCategories(prev => prev.filter(c => c.id !== categoryId));
      if (categoryToDelete) {
@@ -283,6 +327,10 @@ const App: React.FC = () => {
   };
 
   const onDeleteSubcategory = (categoryId: string, subcategoryId: string) => {
+    if (expenses.some(e => e.subcategoryId === subcategoryId)) {
+      alert("This subcategory cannot be deleted because it is associated with existing expenses.");
+      return;
+    }
     const parentCategory = categories.find(c => c.id === categoryId);
     const subcategoryToDelete = parentCategory?.subcategories?.find(sc => sc.id === subcategoryId);
     setCategories(prev => prev.map(c => {
@@ -311,6 +359,10 @@ const App: React.FC = () => {
   };
 
   const onDeleteProject = (projectId: string) => {
+    if (expenses.some(e => e.projectId === projectId)) {
+      alert("This project cannot be deleted because it is associated with existing expenses.");
+      return;
+    }
     const projectToDelete = projects.find(p => p.id === projectId);
     setProjects(prev => prev.filter(p => p.id !== projectId));
     if (projectToDelete) {
@@ -330,6 +382,10 @@ const App: React.FC = () => {
   };
 
   const onDeleteSite = (siteId: string) => {
+    if (expenses.some(e => e.siteId === siteId)) {
+      alert("This site/place cannot be deleted because it is associated with existing expenses.");
+      return;
+    }
     const siteToDelete = sites.find(s => s.id === siteId);
     setSites(prev => prev.filter(s => s.id !== siteId));
     if (siteToDelete) {
@@ -351,6 +407,34 @@ const App: React.FC = () => {
     addAuditLogEntry('Expense Priority Changed', `${action} for expense '${expenseToUpdate.referenceNumber}'.`);
   };
 
+  const handleToggleDailyBackup = () => {
+    const newState = !isDailyBackupEnabled;
+    setDailyBackupEnabled(newState);
+    addAuditLogEntry('System Setting Changed', `Automatic daily backups ${newState ? 'Enabled' : 'Disabled'}.`);
+  };
+
+  const handleManualBackup = () => {
+    if (!currentUser) return;
+
+    const backupData = { users, categories, projects, sites, expenses, auditLog };
+    const backupJSON = JSON.stringify(backupData, null, 2);
+    const blob = new Blob([backupJSON], { type: 'application/json;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}_${now.getHours().toString().padStart(2, '0')}-${now.getMinutes().toString().padStart(2, '0')}`;
+    const filename = `expenseflow-backup-${timestamp}.json`;
+
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+
+    addAuditLogEntry('Data Export', 'Generated and downloaded a manual JSON backup.');
+  };
+
   if (!currentUser) {
     return <Login onLogin={handleLogin} />;
   }
@@ -364,6 +448,7 @@ const App: React.FC = () => {
       sites={sites}
       expenses={expenses}
       auditLog={auditLog}
+      isDailyBackupEnabled={isDailyBackupEnabled}
       onLogout={handleLogout}
       onAddExpense={handleAddExpense}
       onUpdateExpenseStatus={handleUpdateExpenseStatus}
@@ -384,6 +469,8 @@ const App: React.FC = () => {
       onAddSite={handleAddSite}
       onUpdateSite={handleUpdateSite}
       onDeleteSite={onDeleteSite}
+      onToggleDailyBackup={handleToggleDailyBackup}
+      onManualBackup={handleManualBackup}
     />
   );
 };

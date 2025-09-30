@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { User, Category, Role, Subcategory, AuditLogItem, Project, Site } from '../types';
-import { PencilIcon, TrashIcon, PlusIcon } from './Icons';
+import { User, Category, Role, Subcategory, AuditLogItem, Project, Site, Expense } from '../types';
+import { PencilIcon, TrashIcon, PlusIcon, DocumentArrowDownIcon } from './Icons';
 import Modal from './Modal';
 
 interface AdminPanelProps {
@@ -8,7 +8,9 @@ interface AdminPanelProps {
   categories: Category[];
   projects: Project[];
   sites: Site[];
+  expenses: Expense[];
   auditLog: AuditLogItem[];
+  isDailyBackupEnabled: boolean;
   onAddUser: (user: Omit<User, 'id'>) => void;
   onUpdateUser: (user: User) => void;
   onDeleteUser: (userId: string) => void;
@@ -24,14 +26,18 @@ interface AdminPanelProps {
   onAddSite: (site: Omit<Site, 'id'>) => void;
   onUpdateSite: (site: Site) => void;
   onDeleteSite: (siteId: string) => void;
+  onToggleDailyBackup: () => void;
+  onManualBackup: () => void;
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({
-  users, categories, projects, sites, auditLog, onAddUser, onUpdateUser, onDeleteUser,
+  users, categories, projects, sites, auditLog, expenses, isDailyBackupEnabled,
+  onAddUser, onUpdateUser, onDeleteUser,
   onAddCategory, onUpdateCategory, onDeleteCategory,
   onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory,
   onAddProject, onUpdateProject, onDeleteProject,
   onAddSite, onUpdateSite, onDeleteSite,
+  onToggleDailyBackup, onManualBackup
 }) => {
   const [activeTab, setActiveTab] = useState('users');
   const [isUserModalOpen, setUserModalOpen] = useState(false);
@@ -188,6 +194,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
           <TabButton tabId="projects" label="Project Management" />
           <TabButton tabId="sites" label="Site Management" />
           <TabButton tabId="audit" label="Audit Log" />
+          <TabButton tabId="backup" label="Backup & Export" />
         </nav>
       </div>
 
@@ -465,6 +472,55 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         </div>
                     </div>
                 </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'backup' && (
+          <div>
+            <div className="sm:flex sm:items-center">
+              <div className="sm:flex-auto">
+                <h3 className="text-base font-semibold leading-6 text-gray-900">Backup & Export</h3>
+                <p className="mt-2 text-sm text-gray-700">Manage automatic backups and perform manual data exports.</p>
+              </div>
+            </div>
+            <div className="mt-8 space-y-6">
+              {/* Automatic Backup Section */}
+              <div className="p-6 bg-white rounded-lg shadow">
+                <h4 className="font-semibold text-gray-800">Automatic Daily Backups</h4>
+                <p className="mt-1 text-sm text-gray-600">When enabled, a full JSON backup of the system data will be emailed to all administrators every day at 12:05 AM.</p>
+                <div className="flex items-center mt-4">
+                  <button
+                    type="button"
+                    className={`${isDailyBackupEnabled ? 'bg-primary' : 'bg-gray-200'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2`}
+                    role="switch"
+                    aria-checked={isDailyBackupEnabled}
+                    onClick={onToggleDailyBackup}
+                  >
+                    <span className="sr-only">Use setting</span>
+                    <span
+                      aria-hidden="true"
+                      className={`${isDailyBackupEnabled ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                    />
+                  </button>
+                  <span className="ml-3 text-sm font-medium text-gray-900">{isDailyBackupEnabled ? 'Enabled' : 'Disabled'}</span>
+                </div>
+              </div>
+              {/* Manual Backup Section */}
+              <div className="p-6 bg-white rounded-lg shadow">
+                <h4 className="font-semibold text-gray-800">Manual Backup</h4>
+                <p className="mt-1 text-sm text-gray-600">Generate and download a full JSON backup of all system data immediately.</p>
+                <div className="mt-4">
+                  <button 
+                    type="button"
+                    onClick={onManualBackup}
+                    className="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-md shadow-sm bg-primary hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    <DocumentArrowDownIcon className="w-5 h-5 mr-2" />
+                    Download Backup Now
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -20,6 +20,7 @@ interface DashboardProps {
   sites: Site[];
   expenses: Expense[];
   auditLog: AuditLogItem[];
+  isDailyBackupEnabled: boolean;
   onLogout: () => void;
   onAddExpense: (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName' | 'referenceNumber'>) => void;
   onUpdateExpenseStatus: (expenseId: string, newStatus: Status, comment?: string) => void;
@@ -40,10 +41,12 @@ interface DashboardProps {
   onAddSite: (site: Omit<Site, 'id'>) => void;
   onUpdateSite: (site: Site) => void;
   onDeleteSite: (siteId: string) => void;
+  onToggleDailyBackup: () => void;
+  onManualBackup: () => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = (props) => {
-  const { currentUser, users, categories, projects, sites, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog, onToggleExpensePriority, onBulkUpdateExpenseStatus, onAddProject, onUpdateProject, onDeleteProject, onAddSite, onUpdateSite, onDeleteSite } = props;
+  const { currentUser, users, categories, projects, sites, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog, onToggleExpensePriority, onBulkUpdateExpenseStatus, onAddProject, onUpdateProject, onDeleteProject, onAddSite, onUpdateSite, onDeleteSite, isDailyBackupEnabled, onToggleDailyBackup, onManualBackup } = props;
   const [activeTab, setActiveTab] = useState('overview');
   const [isNewExpenseModalOpen, setNewExpenseModalOpen] = useState(false);
   const [modalExpense, setModalExpense] = useState<Expense | null>(null);
@@ -68,7 +71,9 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             categories={categories}
             projects={projects}
             sites={sites}
+            expenses={expenses}
             auditLog={auditLog}
+            isDailyBackupEnabled={isDailyBackupEnabled}
             onAddUser={onAddUser}
             onUpdateUser={onUpdateUser}
             onDeleteUser={onDeleteUser}
@@ -84,6 +89,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             onAddSite={onAddSite}
             onUpdateSite={onUpdateSite}
             onDeleteSite={onDeleteSite}
+            onToggleDailyBackup={onToggleDailyBackup}
+            onManualBackup={onManualBackup}
           />
         );
       case Role.REQUESTOR:

@@ -19,10 +19,9 @@ const formatDate = (isoString: string) => {
     if (!isoString) return '';
     const date = new Date(isoString);
     const day = date.getDate().toString().padStart(2, '0');
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const month = monthNames[date.getMonth()];
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    return `${day}/${month}/${year}`;
 };
 
 const formatDateTime = (isoString: string) => {
@@ -151,4 +150,26 @@ export const notifyApproversOnVerification = (approvers: User[], expense: Expens
         Please log in to the portal to review and take action.
     `;
     approvers.forEach(approver => sendEmailNotification(approver, subject, body));
+};
+
+export const sendBackupEmail = (admins: User[], backupData: string) => {
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+  const subject = `[AUTOMATED] ExpenseFlow Daily Backup for ${dateStr}`;
+  const body = `
+    Hi Admin,
+
+    Attached is the automatic daily backup for the ExpenseFlow system, generated on ${formatDateTime(today.toISOString())}.
+
+    This file contains all users, expenses, categories, projects, sites, and audit logs in JSON format.
+    Please store it in a secure location.
+
+    --- BACKUP DATA ---
+
+    ${backupData}
+
+    --- END OF BACKUP DATA ---
+  `;
+  
+  admins.forEach(admin => sendEmailNotification(admin, subject, body));
 };
