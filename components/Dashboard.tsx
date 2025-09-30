@@ -10,6 +10,7 @@ import AttachmentsDashboard from './AttachmentsDashboard';
 import Modal from './Modal';
 import ExpenseForm from './ExpenseForm';
 import { PlusIcon } from './Icons';
+import ExpenseCard from './ExpenseCard';
 
 interface DashboardProps {
   currentUser: User;
@@ -45,6 +46,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
   const { currentUser, users, categories, projects, sites, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog, onToggleExpensePriority, onBulkUpdateExpenseStatus, onAddProject, onUpdateProject, onDeleteProject, onAddSite, onUpdateSite, onDeleteSite } = props;
   const [activeTab, setActiveTab] = useState('overview');
   const [isNewExpenseModalOpen, setNewExpenseModalOpen] = useState(false);
+  const [modalExpense, setModalExpense] = useState<Expense | null>(null);
+
 
   const getRoleSpecificTabName = () => {
     switch(currentUser.role) {
@@ -92,6 +95,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             categories={categories}
             projects={projects}
             sites={sites}
+            onViewExpense={setModalExpense}
           />
         );
       case Role.VERIFIER:
@@ -105,6 +109,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             onUpdateExpenseStatus={onUpdateExpenseStatus}
             onBulkUpdateExpenseStatus={onBulkUpdateExpenseStatus}
             onToggleExpensePriority={onToggleExpensePriority}
+            onViewExpense={setModalExpense}
           />
         );
       case Role.APPROVER:
@@ -118,6 +123,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             onUpdateExpenseStatus={onUpdateExpenseStatus}
             onBulkUpdateExpenseStatus={onBulkUpdateExpenseStatus}
             onToggleExpensePriority={onToggleExpensePriority}
+            onViewExpense={setModalExpense}
           />
         );
       default:
@@ -143,7 +149,15 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
 
   return (
     <div className="min-h-screen bg-neutral-100">
-      <Header user={currentUser} onLogout={onLogout} />
+      <Header 
+        user={currentUser} 
+        onLogout={onLogout}
+        expenses={expenses}
+        categories={categories}
+        projects={projects}
+        sites={sites}
+        onSelectExpense={setModalExpense}
+      />
       <main className="py-10">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="pb-5 border-b border-gray-200 sm:flex sm:items-baseline sm:justify-between">
@@ -196,6 +210,24 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             onClose={() => setNewExpenseModalOpen(false)}
         />
       </Modal>
+
+      {modalExpense && (
+        <Modal isOpen={!!modalExpense} onClose={() => setModalExpense(null)} title="Expense Details">
+            <ExpenseCard 
+                expense={modalExpense} 
+                categories={categories}
+                projects={projects}
+                sites={sites}
+                userRole={currentUser.role}
+                onUpdateStatus={onUpdateExpenseStatus ? (status, comment) => {
+                    onUpdateExpenseStatus(modalExpense.id, status, comment);
+                    setModalExpense(null);
+                } : undefined}
+                onToggleExpensePriority={onToggleExpensePriority}
+                onClose={() => setModalExpense(null)}
+            />
+        </Modal>
+      )}
     </div>
   );
 };

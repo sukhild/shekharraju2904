@@ -8,9 +8,10 @@ interface RequestorDashboardProps {
   categories: Category[];
   projects: Project[];
   sites: Site[];
+  onViewExpense: (expense: Expense) => void;
 }
 
-const RequestorDashboard: React.FC<RequestorDashboardProps> = ({ currentUser, expenses, categories, projects, sites }) => {
+const RequestorDashboard: React.FC<RequestorDashboardProps> = ({ currentUser, expenses, categories, projects, sites, onViewExpense }) => {
   const [statusFilter, setStatusFilter] = useState<Status | 'All'>('All');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
@@ -84,6 +85,7 @@ const RequestorDashboard: React.FC<RequestorDashboardProps> = ({ currentUser, ex
           title="My Expense History"
           emptyMessage="No expenses match the current filters."
           userRole={Role.REQUESTOR}
+          onViewExpense={onViewExpense}
         />
       </div>
     </div>

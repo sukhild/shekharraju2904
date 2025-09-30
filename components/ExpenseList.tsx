@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Expense, Category, Status, User, Project, Site } from '../types';
 import { EyeIcon, StarIcon } from './Icons';
-import Modal from './Modal';
-import ExpenseCard from './ExpenseCard';
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -12,6 +10,7 @@ interface ExpenseListProps {
   title: string;
   emptyMessage: string;
   userRole?: User['role'];
+  onViewExpense: (expense: Expense) => void;
   onUpdateStatus?: (expenseId: string, newStatus: Status, comment?: string) => void;
   onToggleExpensePriority?: (expenseId: string) => void;
   isSelectionEnabled?: boolean;
@@ -31,10 +30,9 @@ const formatDate = (isoString: string) => {
 };
 
 const ExpenseList: React.FC<ExpenseListProps> = ({ 
-  expenses, categories, projects, sites, title, emptyMessage, userRole, onUpdateStatus, onToggleExpensePriority,
+  expenses, categories, projects, sites, title, emptyMessage, userRole, onViewExpense,
   isSelectionEnabled = false, selectedExpenseIds = [], onToggleSelection, onToggleSelectAll
 }) => {
-  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const headerCheckboxRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -136,7 +134,7 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap">{expense.amount.toLocaleString('en-IN')}</td>
                       <td className="px-3 py-4 text-sm text-gray-500 whitespace-nowrap"><StatusBadge status={expense.status} /></td>
                       <td className="relative py-4 pl-3 pr-4 text-sm font-medium text-right whitespace-nowrap sm:pr-0">
-                        <button onClick={() => setSelectedExpense(expense)} className="text-primary hover:text-primary-hover"><EyeIcon className="w-5 h-5"/></button>
+                        <button onClick={() => onViewExpense(expense)} className="text-primary hover:text-primary-hover"><EyeIcon className="w-5 h-5"/></button>
                       </td>
                     </tr>
                   ))}
@@ -150,25 +148,6 @@ const ExpenseList: React.FC<ExpenseListProps> = ({
           </div>
         )}
       </div>
-      
-      {selectedExpense && (
-        <Modal isOpen={!!selectedExpense} onClose={() => setSelectedExpense(null)} title="Expense Details">
-            <ExpenseCard 
-                expense={selectedExpense} 
-                categories={categories}
-                projects={projects}
-                sites={sites}
-                userRole={userRole}
-                onUpdateStatus={onUpdateStatus ? (status, comment) => {
-                    onUpdateStatus(selectedExpense.id, status, comment);
-                    setSelectedExpense(null);
-                } : undefined}
-                onToggleExpensePriority={onToggleExpensePriority}
-                onClose={() => setSelectedExpense(null)}
-            />
-        </Modal>
-      )}
-
     </div>
   );
 };

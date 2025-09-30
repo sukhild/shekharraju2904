@@ -12,9 +12,10 @@ interface ApproverDashboardProps {
   onUpdateExpenseStatus: (expenseId: string, newStatus: Status, comment?: string) => void;
   onBulkUpdateExpenseStatus: (expenseIds: string[], newStatus: Status, comment?: string) => void;
   onToggleExpensePriority: (expenseId: string) => void;
+  onViewExpense: (expense: Expense) => void;
 }
 
-const ApproverDashboard: React.FC<ApproverDashboardProps> = ({ expenses, categories, projects, sites, onUpdateExpenseStatus, onBulkUpdateExpenseStatus, onToggleExpensePriority }) => {
+const ApproverDashboard: React.FC<ApproverDashboardProps> = ({ expenses, categories, projects, sites, onUpdateExpenseStatus, onBulkUpdateExpenseStatus, onToggleExpensePriority, onViewExpense }) => {
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
   const [sortBy, setSortBy] = useState<'priority' | 'date'>('priority');
   const [selectedExpenseIds, setSelectedExpenseIds] = useState<string[]>([]);
@@ -133,6 +134,7 @@ const ApproverDashboard: React.FC<ApproverDashboardProps> = ({ expenses, categor
           selectedExpenseIds={selectedExpenseIds}
           onToggleSelection={handleToggleSelection}
           onToggleSelectAll={handleToggleSelectAll}
+          onViewExpense={onViewExpense}
         />
       </div>
 
