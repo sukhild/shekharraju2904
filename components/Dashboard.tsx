@@ -7,6 +7,9 @@ import VerifierDashboard from './VerifierDashboard';
 import ApproverDashboard from './ApproverDashboard';
 import OverviewDashboard from './OverviewDashboard';
 import AttachmentsDashboard from './AttachmentsDashboard';
+import Modal from './Modal';
+import ExpenseForm from './ExpenseForm';
+import { PlusIcon } from './Icons';
 
 interface DashboardProps {
   currentUser: User;
@@ -33,6 +36,7 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = (props) => {
   const { currentUser, users, categories, expenses, onLogout, onAddExpense, onUpdateExpenseStatus, onAddUser, onUpdateUser, onDeleteUser, onAddCategory, onUpdateCategory, onDeleteCategory, onAddSubcategory, onUpdateSubcategory, onDeleteSubcategory, auditLog, onToggleExpensePriority, onBulkUpdateExpenseStatus } = props;
   const [activeTab, setActiveTab] = useState('overview');
+  const [isNewExpenseModalOpen, setNewExpenseModalOpen] = useState(false);
 
   const getRoleSpecificTabName = () => {
     switch(currentUser.role) {
@@ -70,7 +74,6 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             currentUser={currentUser}
             expenses={myExpenses}
             categories={categories}
-            onAddExpense={onAddExpense}
           />
         );
       case Role.VERIFIER:
@@ -121,12 +124,24 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
       <Header user={currentUser} onLogout={onLogout} />
       <main className="py-10">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
-          <div className="border-b border-gray-200">
+          <div className="pb-5 border-b border-gray-200 sm:flex sm:items-baseline sm:justify-between">
             <nav className="flex -mb-px space-x-8" aria-label="Tabs">
               <TabButton tabName="overview" label="Overview" />
               <TabButton tabName="tasks" label={getRoleSpecificTabName()} />
               {canSeeAttachmentsTab && <TabButton tabName="attachments" label="Attachments" />}
             </nav>
+             {activeTab === 'tasks' && currentUser.role === Role.REQUESTOR && (
+              <div className="mt-3 sm:ml-4 sm:mt-0">
+                <button
+                  type="button"
+                  onClick={() => setNewExpenseModalOpen(true)}
+                  className="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-md shadow-sm bg-primary hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                >
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Submit New Expense
+                </button>
+              </div>
+            )}
           </div>
           <div className="mt-8">
             {activeTab === 'overview' && (
@@ -145,6 +160,14 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
           </div>
         </div>
       </main>
+
+      <Modal isOpen={isNewExpenseModalOpen} onClose={() => setNewExpenseModalOpen(false)} title="New Expense Request">
+        <ExpenseForm 
+            categories={categories}
+            onSubmit={onAddExpense}
+            onClose={() => setNewExpenseModalOpen(false)}
+        />
+      </Modal>
     </div>
   );
 };

@@ -1,19 +1,14 @@
 import React, { useState } from 'react';
 import { User, Expense, Category, Role, Status } from '../types';
 import ExpenseList from './ExpenseList';
-import Modal from './Modal';
-import ExpenseForm from './ExpenseForm';
-import { PlusIcon } from './Icons';
 
 interface RequestorDashboardProps {
   currentUser: User;
   expenses: Expense[];
   categories: Category[];
-  onAddExpense: (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName'>) => void;
 }
 
-const RequestorDashboard: React.FC<RequestorDashboardProps> = ({ currentUser, expenses, categories, onAddExpense }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+const RequestorDashboard: React.FC<RequestorDashboardProps> = ({ currentUser, expenses, categories }) => {
   const [statusFilter, setStatusFilter] = useState<Status | 'All'>('All');
   const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
@@ -38,19 +33,7 @@ const RequestorDashboard: React.FC<RequestorDashboardProps> = ({ currentUser, ex
 
   return (
     <div>
-      <div className="sm:flex sm:items-center sm:justify-between">
-        <h2 className="text-2xl font-bold tracking-tight text-gray-900">My Expenses</h2>
-        <div className="mt-3 sm:ml-4 sm:mt-0">
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center px-3 py-2 text-sm font-semibold text-white rounded-md shadow-sm bg-primary hover:bg-primary-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <PlusIcon className="w-5 h-5 mr-2" />
-            Submit New Expense
-          </button>
-        </div>
-      </div>
+      <h2 className="text-2xl font-bold tracking-tight text-gray-900">My Expenses</h2>
 
       <div className="p-4 my-6 bg-white rounded-lg shadow">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -99,13 +82,6 @@ const RequestorDashboard: React.FC<RequestorDashboardProps> = ({ currentUser, ex
           userRole={Role.REQUESTOR}
         />
       </div>
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="New Expense Request">
-        <ExpenseForm 
-            categories={categories}
-            onSubmit={onAddExpense}
-            onClose={() => setIsModalOpen(false)}
-        />
-      </Modal>
     </div>
   );
 };
