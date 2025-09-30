@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useRef } from 'react';
 import { Category, Expense, ExpenseAttachment, Project, Site } from '../types';
-import { PaperClipIcon } from './Icons';
+import { PaperClipIcon, XCircleIcon } from './Icons';
 
 interface ExpenseFormProps {
   categories: Category[];
@@ -31,6 +31,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
   const [subcategoryAttachment, setSubcategoryAttachment] = useState<ExpenseAttachment | undefined>(undefined);
   const [error, setError] = useState('');
 
+  const categoryAttachmentInputRef = useRef<HTMLInputElement>(null);
+  const subcategoryAttachmentInputRef = useRef<HTMLInputElement>(null);
+
   const selectedCategory = categories.find(c => c.id === categoryId);
   const subcategoriesForSelectedCategory = selectedCategory?.subcategories || [];
   const selectedSubcategory = subcategoriesForSelectedCategory.find(sc => sc.id === subcategoryId);
@@ -51,6 +54,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
       });
     }
   };
+
+  const handleRemoveCategoryAttachment = () => {
+    setAttachment(undefined);
+    if (categoryAttachmentInputRef.current) {
+        categoryAttachmentInputRef.current.value = '';
+    }
+  };
   
   const handleSubcategoryFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -64,6 +74,13 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
     }
   };
 
+  const handleRemoveSubcategoryAttachment = () => {
+    setSubcategoryAttachment(undefined);
+    if (subcategoryAttachmentInputRef.current) {
+        subcategoryAttachmentInputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -73,10 +90,8 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
       return;
     }
     
-    if (selectedSubcategory?.attachmentRequired && !subcategoryAttachment) {
-      setError(`An attachment is required for the '${selectedSubcategory.name}' subcategory.`);
-      return;
-    }
+    // As requested, subcategory attachment validation is removed to make it optional for the requestor.
+    // The UI hint (*) will still show based on admin settings.
     
     if (!categoryId || !amount || !description || !projectId || !siteId) {
         setError("All fields are required.");
@@ -186,15 +201,23 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
         <label className="block text-sm font-medium text-gray-700">Category Attachment {selectedCategory?.attachmentRequired && <span className="text-red-500">*</span>}</label>
         <div className="flex items-center justify-center w-full px-6 pt-5 pb-6 mt-1 border-2 border-gray-300 border-dashed rounded-md">
             <div className="space-y-1 text-center">
-                <PaperClipIcon className="w-12 h-12 mx-auto text-gray-400"/>
-                <div className="flex text-sm text-gray-600">
+                { !attachment && <PaperClipIcon className="w-12 h-12 mx-auto text-gray-400"/> }
+                <div className="flex justify-center text-sm text-gray-600">
                     <label htmlFor="file-upload" className="relative font-medium rounded-md cursor-pointer text-primary hover:text-primary-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
                         <span>Upload a file</span>
-                        <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} />
+                        <input ref={categoryAttachmentInputRef} id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleFileChange} />
                     </label>
-                    <p className="pl-1">or drag and drop</p>
+                    {!attachment && <p className="pl-1">or drag and drop</p>}
                 </div>
-                {attachment ? <p className="text-xs text-gray-500">{attachment.name}</p> : <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>}
+                 {attachment ? (
+                    <div className="flex items-center justify-center pt-1 text-xs text-gray-600">
+                        <PaperClipIcon className="w-4 h-4 mr-1"/>
+                        <span className="font-medium truncate">{attachment.name}</span>
+                        <button type="button" onClick={handleRemoveCategoryAttachment} className="ml-2 text-red-500 hover:text-red-700">
+                            <XCircleIcon className="w-4 h-4" />
+                        </button>
+                    </div>
+                 ) : <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>}
             </div>
         </div>
       </div>
@@ -204,15 +227,23 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({ categories, projects, sites, 
             <label className="block text-sm font-medium text-gray-700">Subcategory Attachment {selectedSubcategory?.attachmentRequired && <span className="text-red-500">*</span>}</label>
             <div className="flex items-center justify-center w-full px-6 pt-5 pb-6 mt-1 border-2 border-gray-300 border-dashed rounded-md">
                 <div className="space-y-1 text-center">
-                    <PaperClipIcon className="w-12 h-12 mx-auto text-gray-400"/>
-                    <div className="flex text-sm text-gray-600">
+                    { !subcategoryAttachment && <PaperClipIcon className="w-12 h-12 mx-auto text-gray-400"/> }
+                    <div className="flex justify-center text-sm text-gray-600">
                         <label htmlFor="sub-file-upload" className="relative font-medium rounded-md cursor-pointer text-primary hover:text-primary-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
                             <span>Upload a file</span>
-                            <input id="sub-file-upload" name="sub-file-upload" type="file" className="sr-only" onChange={handleSubcategoryFileChange} />
+                            <input ref={subcategoryAttachmentInputRef} id="sub-file-upload" name="sub-file-upload" type="file" className="sr-only" onChange={handleSubcategoryFileChange} />
                         </label>
-                        <p className="pl-1">or drag and drop</p>
+                        {!subcategoryAttachment && <p className="pl-1">or drag and drop</p>}
                     </div>
-                    {subcategoryAttachment ? <p className="text-xs text-gray-500">{subcategoryAttachment.name}</p> : <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>}
+                    {subcategoryAttachment ? (
+                        <div className="flex items-center justify-center pt-1 text-xs text-gray-600">
+                            <PaperClipIcon className="w-4 h-4 mr-1"/>
+                            <span className="font-medium truncate">{subcategoryAttachment.name}</span>
+                            <button type="button" onClick={handleRemoveSubcategoryAttachment} className="ml-2 text-red-500 hover:text-red-700">
+                                <XCircleIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                    ) : <p className="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>}
                 </div>
             </div>
         </div>
