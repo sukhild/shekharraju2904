@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Expense, Category, Role, Status, Subcategory, AuditLogItem, Project, Site, AvailableBackups } from '../types';
+import { Expense, Category, Status, Subcategory, AuditLogItem, Project, Site, AvailableBackups } from '../types';
 import Header from './Header';
 import AdminPanel from './AdminPanel';
 import RequestorDashboard from './RequestorDashboard';
@@ -13,8 +13,7 @@ import { PlusIcon } from './Icons';
 import ExpenseCard from './ExpenseCard';
 
 interface DashboardProps {
-  currentUser: User;
-  users: User[];
+  currentUser: any; // Supabase user object
   categories: Category[];
   projects: Project[];
   sites: Site[];
@@ -26,8 +25,8 @@ interface DashboardProps {
   onAddExpense: (expenseData: Omit<Expense, 'id' | 'status' | 'submittedAt' | 'history' | 'requestorId' | 'requestorName' | 'referenceNumber'>) => void;
   onUpdateExpenseStatus: (expenseId: string, newStatus: Status, comment?: string) => void;
   onBulkUpdateExpenseStatus: (expenseIds: string[], newStatus: Status, comment?: string) => void;
-  onAddUser: (user: Omit<User, 'id'>) => void;
-  onUpdateUser: (user: User) => void;
+  onAddUser: (user: any) => void;
+  onUpdateUser: (user: any) => void;
   onDeleteUser: (userId: string) => void;
   onAddCategory: (category: Omit<Category, 'id'>) => void;
   onUpdateCategory: (category: Category) => void;
@@ -50,27 +49,28 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = (props) => {
-  // FIX: Removed non-existent 'setModalExpense' prop from destructuring.
   const { currentUser, onLogout, expenses, categories, projects, sites, onAddExpense, onUpdateExpenseStatus, ...adminProps } = props;
+
   const [activeTab, setActiveTab] = useState('overview');
   const [isNewExpenseModalOpen, setNewExpenseModalOpen] = useState(false);
   const [modalExpense, setModalExpense] = useState<Expense | null>(null);
 
+  // 👇 Get role from Supabase metadata
+  const role: string = currentUser?.user_metadata?.role || 'none';
 
   const getRoleSpecificTabName = () => {
-    switch(currentUser.role) {
-      case Role.ADMIN: return 'Admin Panel';
-      case Role.REQUESTOR: return 'My Expenses';
-      case Role.VERIFIER: return 'Verification Queue';
-      case Role.APPROVER: return 'Approval Queue';
+    switch(role) {
+      case 'admin': return 'Admin Panel';
+      case 'requestor': return 'My Expenses';
+      case 'verifier': return 'Verification Queue';
+      case 'approver': return 'Approval Queue';
       default: return 'My Tasks';
     }
   };
 
   const renderRoleSpecificContent = () => {
-    switch (currentUser.role) {
-      case Role.ADMIN:
-        // FIX: Pass missing 'expenses', 'categories', 'projects', and 'sites' props to AdminPanel.
+    switch (role) {
+      case 'admin':
         return (
           <AdminPanel 
             {...adminProps}
@@ -80,7 +80,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             sites={sites}
           />
         );
-      case Role.REQUESTOR:
+      case 'requestor':
         const myExpenses = expenses.filter(e => e.requestorId === currentUser.id);
         return (
           <RequestorDashboard 
@@ -92,7 +92,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             onViewExpense={setModalExpense}
           />
         );
-      case Role.VERIFIER:
+      case 'verifier':
         const toVerify = expenses.filter(e => e.status === Status.PENDING_VERIFICATION);
         return (
           <VerifierDashboard
@@ -106,7 +106,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             onViewExpense={setModalExpense}
           />
         );
-      case Role.APPROVER:
+      case 'approver':
         const toApprove = expenses.filter(e => e.status === Status.PENDING_APPROVAL);
         return (
           <ApproverDashboard
@@ -125,12 +125,12 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
     }
   };
 
-  // Filter expenses for the overview dashboard based on user role
-  const overviewExpenses = currentUser.role === Role.REQUESTOR
+  // Filter expenses for overview dashboard
+  const overviewExpenses = role === 'requestor'
     ? expenses.filter(e => e.requestorId === currentUser.id)
     : expenses;
 
-  const canSeeAttachmentsTab = [Role.ADMIN, Role.VERIFIER, Role.APPROVER].includes(currentUser.role);
+  const canSeeAttachmentsTab = ['admin', 'verifier', 'approver'].includes(role);
 
   const TabButton = ({ tabName, label }: {tabName: string; label: string}) => (
     <button
@@ -139,7 +139,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
     >
       {label}
     </button>
-  )
+  );
 
   return (
     <div className="min-h-screen bg-neutral-100">
@@ -160,7 +160,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
               <TabButton tabName="tasks" label={getRoleSpecificTabName()} />
               {canSeeAttachmentsTab && <TabButton tabName="attachments" label="Attachments" />}
             </nav>
-             {activeTab === 'tasks' && currentUser.role === Role.REQUESTOR && (
+             {activeTab === 'tasks' && role === 'requestor' && (
               <div className="mt-3 sm:ml-4 sm:mt-0">
                 <button
                   type="button"
@@ -212,7 +212,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
                 categories={categories}
                 projects={projects}
                 sites={sites}
-                userRole={currentUser.role}
+                userRole={role}
                 onUpdateStatus={onUpdateExpenseStatus ? (status, comment) => {
                     onUpdateExpenseStatus(modalExpense.id, status, comment);
                     setModalExpense(null);

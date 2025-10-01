@@ -51,15 +51,35 @@ const App: React.FC = () => {
     return true;
   };
 
-const handleRegister = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  console.log("REGISTER response:", data, error);
+const handleRegister = async (email: string, password: string, role: string = "requestor", fullName?: string) => {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+
   if (error) {
     alert(error.message);
-  } else {
-    alert("Registered! If email confirmation is enabled, check your inbox.");
+    return;
   }
+
+  if (data.user) {
+    // Insert profile row
+    const { error: profileError } = await supabase.from("profiles").insert([
+      {
+        id: data.user.id,
+        email,
+        full_name: fullName || email,
+        role,
+      }
+    ]);
+    if (profileError) {
+      console.error("Profile insert failed:", profileError.message);
+    }
+  }
+
+  alert(`Registered as ${role}. Check your email to confirm.`);
 };
+
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

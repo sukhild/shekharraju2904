@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 
 interface LoginProps {
   onLogin: (email: string, password: string) => Promise<boolean>;
-  onRegister: (email: string, password: string) => void;
+  onRegister: (email: string, password: string, role: string) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('requestor'); // default role
   const [error, setError] = useState('');
   const [isRegisterMode, setIsRegisterMode] = useState(false);
 
@@ -16,7 +17,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
     setError('');
 
     if (isRegisterMode) {
-      onRegister(email, password);
+      onRegister(email, password, role);
     } else {
       const success = await onLogin(email, password);
       if (!success) {
@@ -39,67 +40,64 @@ const Login: React.FC<LoginProps> = ({ onLogin, onRegister }) => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
-              <label htmlFor="email" className="sr-only">Email</label>
               <input
-                id="email"
-                name="email"
                 type="email"
-                autoComplete="email"
                 required
-                className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
               />
             </div>
             <div>
-              <label htmlFor="password-input" className="sr-only">Password</label>
               <input
-                id="password-input"
-                name="password"
                 type="password"
-                autoComplete="current-password"
                 required
-                className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border rounded-md"
               />
             </div>
+
+            {isRegisterMode && (
+              <div>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="requestor">Requestor</option>
+                  <option value="verifier">Verifier</option>
+                  <option value="approver">Approver</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
-          <div>
-            <button
-              type="submit"
-              className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white border border-transparent rounded-md group bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-            >
-              {isRegisterMode ? 'Register' : 'Sign In'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          >
+            {isRegisterMode ? 'Register' : 'Sign In'}
+          </button>
         </form>
 
         <div className="mt-4 text-sm text-center text-gray-600">
           {isRegisterMode ? (
             <p>
               Already have an account?{' '}
-              <button
-                type="button"
-                className="text-primary hover:underline"
-                onClick={() => setIsRegisterMode(false)}
-              >
+              <button className="text-blue-600 hover:underline" onClick={() => setIsRegisterMode(false)}>
                 Sign In
               </button>
             </p>
           ) : (
             <p>
               Don’t have an account?{' '}
-              <button
-                type="button"
-                className="text-primary hover:underline"
-                onClick={() => setIsRegisterMode(true)}
-              >
+              <button className="text-blue-600 hover:underline" onClick={() => setIsRegisterMode(true)}>
                 Register
               </button>
             </p>
