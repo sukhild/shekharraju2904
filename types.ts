@@ -31,7 +31,6 @@ export interface Site {
   name: string;
 }
 
-
 export interface Subcategory {
   id: string;
   name: string;
@@ -39,7 +38,7 @@ export interface Subcategory {
 }
 
 export interface Category {
-  id:string;
+  id: string;
   name: string;
   attachmentRequired: boolean;
   autoApproveAmount: number;
@@ -82,8 +81,7 @@ export interface Expense {
 export interface AuditLogItem {
   id: string;
   timestamp: string; // ISO string
-  actorId: string;
-  actorName: string;
+  actorName: string;   // ✅ only keep actorName
   action: string;
   details: string;
 }
