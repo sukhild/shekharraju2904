@@ -1,29 +1,31 @@
-import React, { useState } from 'react';
+// components/Dashboard.tsx
+import React, { useState } from "react";
 import {
   Expense,
   Category,
   Status,
-  Subcategory,
   AuditLogItem,
   Project,
   Site,
   AvailableBackups,
   Role,
-} from '../types';
-import Header from './Header';
-import AdminPanel from './AdminPanel';
-import RequestorDashboard from './RequestorDashboard';
-import VerifierDashboard from './VerifierDashboard';
-import ApproverDashboard from './ApproverDashboard';
-import OverviewDashboard from './OverviewDashboard';
-import AttachmentsDashboard from './AttachmentsDashboard';
-import Modal from './Modal';
-import ExpenseForm from './ExpenseForm';
-import { PlusIcon } from './Icons';
-import ExpenseCard from './ExpenseCard';
+  User,
+} from "../types";
+
+import Header from "./Header";
+import AdminPanel from "./AdminPanel";
+import RequestorDashboard from "./RequestorDashboard";
+import VerifierDashboard from "./VerifierDashboard";
+import ApproverDashboard from "./ApproverDashboard";
+import OverviewDashboard from "./OverviewDashboard";
+import AttachmentsDashboard from "./AttachmentsDashboard";
+import Modal from "./Modal";
+import ExpenseForm from "./ExpenseForm";
+import { PlusIcon } from "./Icons";
+import ExpenseCard from "./ExpenseCard";
 
 interface DashboardProps {
-  currentUser: any; // Supabase user object
+  currentUser: User | any; // Supabase user object may not match User interface exactly
   categories: Category[];
   projects: Project[];
   sites: Site[];
@@ -31,17 +33,18 @@ interface DashboardProps {
   auditLog: AuditLogItem[];
   isDailyBackupEnabled: boolean;
   availableBackups: AvailableBackups;
+
   onLogout: () => void;
   onAddExpense: (
     expenseData: Omit<
       Expense,
-      | 'id'
-      | 'status'
-      | 'submittedAt'
-      | 'history'
-      | 'requestorId'
-      | 'requestorName'
-      | 'referenceNumber'
+      | "id"
+      | "status"
+      | "submittedAt"
+      | "history"
+      | "requestorId"
+      | "requestorName"
+      | "referenceNumber"
     >
   ) => void;
   onUpdateExpenseStatus: (
@@ -54,92 +57,56 @@ interface DashboardProps {
     newStatus: Status,
     comment?: string
   ) => void;
-  onAddUser: (user: any) => void;
-  onUpdateUser: (user: any) => void;
-  onDeleteUser: (userId: string) => void;
-  onAddCategory: (category: Omit<Category, 'id'>) => void;
-  onUpdateCategory: (category: Category) => void;
-  onDeleteCategory: (categoryId: string) => void;
-  onAddSubcategory: (
-    categoryId: string,
-    subcategoryData: Omit<Subcategory, 'id'>
-  ) => void;
-  onUpdateSubcategory: (
-    categoryId: string,
-    updatedSubcategory: Subcategory
-  ) => void;
-  onDeleteSubcategory: (categoryId: string, subcategoryId: string) => void;
   onToggleExpensePriority: (expenseId: string) => void;
-  onAddProject: (project: Omit<Project, 'id'>) => void;
-  onUpdateProject: (project: Project) => void;
-  onDeleteProject: (projectId: string) => void;
-  onAddSite: (site: Omit<Site, 'id'>) => void;
-  onUpdateSite: (site: Site) => void;
-  onDeleteSite: (siteId: string) => void;
-  onToggleDailyBackup: () => void;
-  onManualBackup: () => void;
-  onImportBackup: (file: File) => void;
-  onCreateMirrorBackup: () => void;
-  onDownloadSpecificBackup: (key: string) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = (props) => {
-  const {
-    currentUser,
-    onLogout,
-    expenses,
-    categories,
-    projects,
-    sites,
-    onAddExpense,
-    onUpdateExpenseStatus,
-    ...adminProps
-  } = props;
-
-  const [activeTab, setActiveTab] = useState('overview');
+const Dashboard: React.FC<DashboardProps> = ({
+  currentUser,
+  expenses,
+  categories,
+  projects,
+  sites,
+  onLogout,
+  onAddExpense,
+  onUpdateExpenseStatus,
+  onBulkUpdateExpenseStatus,
+  onToggleExpensePriority,
+}) => {
+  const [activeTab, setActiveTab] = useState("overview");
   const [isNewExpenseModalOpen, setNewExpenseModalOpen] = useState(false);
   const [modalExpense, setModalExpense] = useState<Expense | null>(null);
 
-  // Get role from Supabase metadata (string)
-  const roleStr: string = currentUser?.user_metadata?.role || 'none';
-
-  // Map Supabase string role -> Role enum
+  // 🔑 Get role from Supabase metadata or default
+  const roleStr: string = currentUser?.user_metadata?.role || "requestor";
   const role: Role =
-    roleStr === 'admin'
+    roleStr === "admin"
       ? Role.ADMIN
-      : roleStr === 'verifier'
+      : roleStr === "verifier"
       ? Role.VERIFIER
-      : roleStr === 'approver'
+      : roleStr === "approver"
       ? Role.APPROVER
       : Role.REQUESTOR;
 
   const getRoleSpecificTabName = () => {
     switch (role) {
       case Role.ADMIN:
-        return 'Admin Panel';
+        return "Admin Panel";
       case Role.REQUESTOR:
-        return 'My Expenses';
+        return "My Expenses";
       case Role.VERIFIER:
-        return 'Verification Queue';
+        return "Verification Queue";
       case Role.APPROVER:
-        return 'Approval Queue';
+        return "Approval Queue";
       default:
-        return 'My Tasks';
+        return "My Tasks";
     }
   };
 
   const renderRoleSpecificContent = () => {
     switch (role) {
       case Role.ADMIN:
-        return (
-          <AdminPanel
-            {...adminProps}
-            expenses={expenses}
-            categories={categories}
-            projects={projects}
-            sites={sites}
-          />
-        );
+        return <AdminPanel />;
+
       case Role.REQUESTOR:
         const myExpenses = expenses.filter(
           (e) => e.requestorId === currentUser.id
@@ -154,6 +121,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             onViewExpense={setModalExpense}
           />
         );
+
       case Role.VERIFIER:
         const toVerify = expenses.filter(
           (e) => e.status === Status.PENDING_VERIFICATION
@@ -165,11 +133,12 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             projects={projects}
             sites={sites}
             onUpdateExpenseStatus={onUpdateExpenseStatus}
-            onBulkUpdateExpenseStatus={adminProps.onBulkUpdateExpenseStatus}
-            onToggleExpensePriority={adminProps.onToggleExpensePriority}
+            onBulkUpdateExpenseStatus={onBulkUpdateExpenseStatus}
+            onToggleExpensePriority={onToggleExpensePriority}
             onViewExpense={setModalExpense}
           />
         );
+
       case Role.APPROVER:
         const toApprove = expenses.filter(
           (e) => e.status === Status.PENDING_APPROVAL
@@ -181,26 +150,27 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             projects={projects}
             sites={sites}
             onUpdateExpenseStatus={onUpdateExpenseStatus}
-            onBulkUpdateExpenseStatus={adminProps.onBulkUpdateExpenseStatus}
-            onToggleExpensePriority={adminProps.onToggleExpensePriority}
+            onBulkUpdateExpenseStatus={onBulkUpdateExpenseStatus}
+            onToggleExpensePriority={onToggleExpensePriority}
             onViewExpense={setModalExpense}
           />
         );
+
       default:
         return <p>You do not have a role assigned.</p>;
     }
   };
 
+  // Overview tab shows only personal expenses for requestors
   const overviewExpenses =
     role === Role.REQUESTOR
       ? expenses.filter((e) => e.requestorId === currentUser.id)
       : expenses;
 
-  const canSeeAttachmentsTab = [
-    Role.ADMIN,
-    Role.VERIFIER,
-    Role.APPROVER,
-  ].includes(role);
+  // Attachments tab only for Admin, Verifier, Approver
+  const canSeeAttachmentsTab = [Role.ADMIN, Role.VERIFIER, Role.APPROVER].includes(
+    role
+  );
 
   const TabButton = ({
     tabName,
@@ -213,8 +183,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
       onClick={() => setActiveTab(tabName)}
       className={`${
         activeTab === tabName
-          ? 'border-primary text-primary'
-          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+          ? "border-primary text-primary"
+          : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
       } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
     >
       {label}
@@ -232,8 +202,10 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
         sites={sites}
         onSelectExpense={setModalExpense}
       />
+
       <main className="py-10">
         <div className="px-4 mx-auto max-w-7xl sm:px-6 lg:px-8">
+          {/* Tabs */}
           <div className="pb-5 border-b border-gray-200 sm:flex sm:items-baseline sm:justify-between">
             <nav className="flex -mb-px space-x-8" aria-label="Tabs">
               <TabButton tabName="overview" label="Overview" />
@@ -242,7 +214,9 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
                 <TabButton tabName="attachments" label="Attachments" />
               )}
             </nav>
-            {activeTab === 'tasks' && role === Role.REQUESTOR && (
+
+            {/* Requestor → Submit new expense */}
+            {activeTab === "tasks" && role === Role.REQUESTOR && (
               <div className="mt-3 sm:ml-4 sm:mt-0">
                 <button
                   type="button"
@@ -255,8 +229,10 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
               </div>
             )}
           </div>
+
+          {/* Tab Content */}
           <div className="mt-8">
-            {activeTab === 'overview' && (
+            {activeTab === "overview" && (
               <OverviewDashboard
                 expenses={overviewExpenses}
                 categories={categories}
@@ -264,8 +240,8 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
                 sites={sites}
               />
             )}
-            {activeTab === 'tasks' && renderRoleSpecificContent()}
-            {activeTab === 'attachments' && canSeeAttachmentsTab && (
+            {activeTab === "tasks" && renderRoleSpecificContent()}
+            {activeTab === "attachments" && canSeeAttachmentsTab && (
               <AttachmentsDashboard
                 expenses={expenses}
                 categories={categories}
@@ -277,6 +253,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
         </div>
       </main>
 
+      {/* New Expense Modal */}
       <Modal
         isOpen={isNewExpenseModalOpen}
         onClose={() => setNewExpenseModalOpen(false)}
@@ -291,6 +268,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
         />
       </Modal>
 
+      {/* Expense Details Modal */}
       {modalExpense && (
         <Modal
           isOpen={!!modalExpense}
@@ -302,7 +280,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
             categories={categories}
             projects={projects}
             sites={sites}
-            userRole={role} // ✅ fixed: Role enum
+            userRole={role}
             onUpdateStatus={
               onUpdateExpenseStatus
                 ? (status, comment) => {
@@ -311,7 +289,7 @@ const Dashboard: React.FC<DashboardProps> = (props) => {
                   }
                 : undefined
             }
-            onToggleExpensePriority={adminProps.onToggleExpensePriority}
+            onToggleExpensePriority={onToggleExpensePriority}
             onClose={() => setModalExpense(null)}
           />
         </Modal>

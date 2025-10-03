@@ -6,7 +6,6 @@ import {
   Category,
   Role,
   Status,
-  Subcategory,
   AuditLogItem,
   Project,
   Site,
@@ -26,7 +25,6 @@ const generateReferenceNumber = (): string => {
 };
 
 const App: React.FC = () => {
-  // --- Supabase-managed user ---
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   // --- State ---
@@ -55,10 +53,7 @@ const App: React.FC = () => {
   }, []);
 
   // --- Login ---
-  const handleLogin = async (
-    email: string,
-    password: string
-  ): Promise<boolean> => {
+  const handleLogin = async (email: string, password: string): Promise<boolean> => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -72,44 +67,42 @@ const App: React.FC = () => {
   };
 
   // --- Register ---
-const handleRegister = async (
-  email: string,
-  password: string,
-  role: Role = Role.REQUESTOR,
-  fullName?: string
-) => {
-  // 1. Create auth user with role in user_metadata
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { role },   // ✅ save role in user_metadata
-    },
-  });
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
-
-  // 2. Insert into "profiles" table
-  if (data.user) {
-    const { error: profileError } = await supabase.from("profiles").insert([
-      {
-        id: data.user.id,
-        email,
-        full_name: fullName || email,
-        role, // ✅ save role in DB too
+  const handleRegister = async (
+    email: string,
+    password: string,
+    role: Role = Role.REQUESTOR,
+    fullName?: string
+  ) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { role }, // ✅ save role in user_metadata
       },
-    ]);
+    });
 
-    if (profileError) {
-      console.error("Profile insert failed:", profileError.message);
+    if (error) {
+      alert(error.message);
+      return;
     }
-  }
 
-  alert(`Registered as ${role}. Check your email to confirm.`);
-};
+    if (data.user) {
+      const { error: profileError } = await supabase.from("profiles").insert([
+        {
+          id: data.user.id,
+          email,
+          full_name: fullName || email,
+          role,
+        },
+      ]);
+
+      if (profileError) {
+        console.error("Profile insert failed:", profileError.message);
+      }
+    }
+
+    alert(`Registered as ${role}. Check your email to confirm.`);
+  };
 
   // --- Logout ---
   const handleLogout = async () => {
@@ -130,11 +123,7 @@ const handleRegister = async (
       } else if (key?.startsWith("mirror_backup_")) {
         const dateStr = key.replace("mirror_backup_", "");
         const backupDate = new Date(dateStr);
-        const sixMonthsAgo = new Date(
-          now.getFullYear(),
-          now.getMonth() - 6,
-          now.getDate()
-        );
+        const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
         if (backupDate < sixMonthsAgo) {
           localStorage.removeItem(key);
         } else {
@@ -207,10 +196,74 @@ const handleRegister = async (
     };
 
     setExpenses((prev) => [newExpense, ...prev]);
-    addAuditLogEntry(
-      "Expense Submitted",
-      `Expense ${newExpense.referenceNumber} submitted.`
+    addAuditLogEntry("Expense Submitted", `Expense ${newExpense.referenceNumber} submitted.`);
+  };
+
+  // --- Update single expense status ---
+  const handleUpdateExpenseStatus = (expenseId: string, newStatus: Status, comment?: string) => {
+    setExpenses((prev) =>
+      prev.map((exp) =>
+        exp.id === expenseId
+          ? {
+              ...exp,
+              status: newStatus,
+              history: [
+                ...exp.history,
+                {
+                  actorId: currentUser.id,
+                  actorName: currentUser.email,
+                  action: `Status changed to ${newStatus}${comment ? ` (${comment})` : ""}`,
+                  timestamp: new Date().toISOString(),
+                },
+              ],
+            }
+          : exp
+      )
     );
+
+    addAuditLogEntry("Expense Updated", `Expense ${expenseId} set to ${newStatus}`);
+  };
+
+  // --- Bulk update expenses ---
+  const handleBulkUpdateExpenseStatus = (
+    expenseIds: string[],
+    newStatus: Status,
+    comment?: string
+  ) => {
+    setExpenses((prev) =>
+      prev.map((exp) =>
+        expenseIds.includes(exp.id)
+          ? {
+              ...exp,
+              status: newStatus,
+              history: [
+                ...exp.history,
+                {
+                  actorId: currentUser.id,
+                  actorName: currentUser.email,
+                  action: `Bulk status change to ${newStatus}${comment ? ` (${comment})` : ""}`,
+                  timestamp: new Date().toISOString(),
+                },
+              ],
+            }
+          : exp
+      )
+    );
+
+    addAuditLogEntry("Bulk Expense Update", `${expenseIds.length} expenses set to ${newStatus}`);
+  };
+
+  // --- Toggle priority ---
+  const handleToggleExpensePriority = (expenseId: string) => {
+    setExpenses((prev) =>
+      prev.map((exp) =>
+        exp.id === expenseId
+          ? { ...exp, isHighPriority: !exp.isHighPriority }
+          : exp
+      )
+    );
+
+    addAuditLogEntry("Priority Toggled", `Expense ${expenseId} priority toggled`);
   };
 
   // --- If not logged in ---
@@ -231,30 +284,9 @@ const handleRegister = async (
       availableBackups={availableBackups}
       onLogout={handleLogout}
       onAddExpense={handleAddExpense}
-      // ✅ Stub the rest so DashboardProps are satisfied
-      onUpdateExpenseStatus={() => {}}
-      onBulkUpdateExpenseStatus={() => {}}
-      onAddUser={() => {}}
-      onUpdateUser={() => {}}
-      onDeleteUser={() => {}}
-      onAddCategory={() => {}}
-      onUpdateCategory={() => {}}
-      onDeleteCategory={() => {}}
-      onAddSubcategory={() => {}}
-      onUpdateSubcategory={() => {}}
-      onDeleteSubcategory={() => {}}
-      onToggleExpensePriority={() => {}}
-      onAddProject={() => {}}
-      onUpdateProject={() => {}}
-      onDeleteProject={() => {}}
-      onAddSite={() => {}}
-      onUpdateSite={() => {}}
-      onDeleteSite={() => {}}
-      onToggleDailyBackup={() => {}}
-      onManualBackup={() => {}}
-      onImportBackup={() => {}}
-      onCreateMirrorBackup={() => {}}
-      onDownloadSpecificBackup={() => {}}
+      onUpdateExpenseStatus={handleUpdateExpenseStatus}
+      onBulkUpdateExpenseStatus={handleBulkUpdateExpenseStatus}
+      onToggleExpensePriority={handleToggleExpensePriority}
     />
   );
 };

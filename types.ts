@@ -80,11 +80,13 @@ export interface Expense {
 
 export interface AuditLogItem {
   id: string;
-  timestamp: string; // ISO string
-  actorName: string;   // ✅ only keep actorName
+  timestamp: string;
+  actorId: string;   // ✅ add this
+  actorName: string;
   action: string;
   details: string;
 }
+
 
 export interface AvailableBackups {
   daily: string[];
