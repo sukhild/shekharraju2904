@@ -312,28 +312,29 @@ const AdminPanel: React.FC = () => {
     await loadSites();
   }
 
-  // --- Audit log
-  async function loadAuditLog() {
-    const { data, error } = await supabase
-      .from("audit_log")
-      .select("*")
-      .order("timestamp", { ascending: false });
-    if (error) {
-      console.error("loadAuditLog error", error);
-      return;
-    }
-    if (data) {
-      setAuditLog(
-        data.map((a: any) => ({
-          id: a.id,
-          timestamp: a.timestamp,
-          actorName: a.actor_name,
-          action: a.action,
-          details: a.details,
-        }))
-      );
-    }
+async function loadAuditLog() {
+  const { data, error } = await supabase
+    .from("audit_log")
+    .select("*")
+    .order("timestamp", { ascending: false });
+  if (error) {
+    console.error("loadAuditLog error", error);
+    return;
   }
+  if (data) {
+    setAuditLog(
+      data.map((a: any) => ({
+        id: a.id,
+        actorId: a.actor_id, // ✅ add this line
+        timestamp: a.timestamp,
+        actorName: a.actor_name,
+        action: a.action,
+        details: a.details,
+      }))
+    );
+  }
+}
+
 
   // --- Backups (stub)
   const handleToggleDailyBackup = () => setDailyBackupEnabled((s) => !s);
